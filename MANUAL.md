@@ -53,7 +53,7 @@ ADMIN_PASSWORD=ตั้งรหัสของคุณ npm start
 ครั้งแรกที่เริ่มทำงาน ระบบจะคัดลอกการ์ดและรูปเริ่มต้นไปไว้ใน `DATA_DIR` ให้อัตโนมัติ หลังจากนั้นข้อมูลที่นั่นคือข้อมูลจริง
 
 ### 2.4 Deploy
-ใช้โฮสต์ที่รัน Node.js ได้ (Render, Railway, Fly.io, VPS ฯลฯ)
+ใช้โฮสต์ที่รัน Node.js ได้ (Render, Railway, VPS ฯลฯ)
 - Build command: `npm install`
 - Start command: `npm start`
 - ตั้ง `ADMIN_PASSWORD` และ `DATA_DIR` พร้อมผูกดิสก์ถาวร
