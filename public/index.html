@@ -91,6 +91,10 @@ h3{color:var(--mut);margin:10px 0 6px}
 .db-dart{width:84px;flex:none}.db-dart img{width:100%;display:block;border-radius:8px;border:2px solid var(--ink)}.db-dinfo{flex:1;min-width:0}.db-dinfo h3{margin:0 0 4px;color:var(--ink);overflow-wrap:anywhere}.db-ds{font-size:.85rem;margin-top:2px}
 .db-add{flex-direction:column;align-items:center;justify-content:center;min-height:150px;font:inherit;font-weight:700;font-size:1.1rem;color:var(--ink);border-style:dashed;cursor:pointer;gap:4px}.db-add span{font-size:2.4rem;line-height:1}.db-add:hover{background:var(--gold);color:#111}
 .chip.danger{background:#c0121f;color:#fff;border-color:#c0121f}
+#dzoom{position:fixed;z-index:40;pointer-events:none;opacity:0;transform:scale(.96);transition:opacity .12s,transform .12s;border-radius:16px;border:3px solid var(--ink);background:var(--card);box-shadow:8px 8px 0 rgba(0,0,0,.35);overflow:hidden}
+#dzoom.on{opacity:1;transform:none}#dzoom img{width:100%;height:100%;display:block;object-fit:contain}
+@media(prefers-reduced-motion:reduce){#dzoom{transition:none}}
+.db-img[data-z],.db-m[data-z]{cursor:zoom-in}
 @media(max-width:900px){.db-wrap{grid-template-columns:1fr}.db-side{position:static;max-height:none}}
 .noimg{aspect-ratio:170/241;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;border:2px solid var(--ink);border-radius:10px;background:var(--pap)}.meta{margin-top:14px;padding-top:10px;border-top:1px dashed var(--mut);font-size:.85rem;color:var(--mut)}</style></head><body><main>
 <nav class="sitetabs" aria-label="เมนูเว็บ"><a class="on" href="/cards/" data-v="cards" aria-current="page">Card List</a><a href="#deckbuilder" data-v="deck">Deckbuilder</a><a href="/" target="_blank" rel="noopener">Playtest ↗</a></nav>
@@ -168,5 +172,5 @@ addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
  if(e.data.afDeck){if(window.DB&&DB.ready&&DB.ready())DB.openDeck(e.data.afDeck);else window.__afDeckQ=e.data.afDeck}});
 
 </script>
-<script src="/cards/deckbuilder.js?v=3"></script>
+<script src="/cards/deckbuilder.js?v=4"></script>
 </body></html>
