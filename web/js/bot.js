@@ -148,6 +148,11 @@ AF.makeBot = function (o = {}) {
       const opts = spec.options.filter(x => !x.disabled);
       const take = n => opts.slice(0, n).map(x => x.id);
       const title = spec.title || '';
+      if (spec.kind === 'payel') {   // บอท: จ่ายจากสีที่มีเหลือมากสุดก่อน (รักษาความหลากหลายของสี)
+        const left = {}; spec.options.forEach(o => { left[o.id] = o.count; }); const out = [];
+        for (let i = 0; i < spec.n; i++) { const k = Object.keys(left).sort((a, b) => left[b] - left[a])[0]; left[k]--; out.push(k); }
+        return out;
+      }
       if (spec.kind === 'choice') {
         if (/ย้ายไปใต้/.test(title) || (spec.options[0] && /ย้ายไปใต้/.test(spec.options[0].label || ''))) { const t = P.deck[0]; return [t && cardValue(G, t) < 5 ? 'y' : 'n']; }
         if (/เปลี่ยนเป้าหมาย/.test(title)) return [AF.standElems(P).length >= 2 ? 'y' : 'n'];

@@ -301,20 +301,13 @@ async function payElems(G, p, n, el = null, why = '') {
   const cnt = {}; pool.forEach(e => { cnt[e.el] = (cnt[e.el] || 0) + 1; });
   const cols = Object.keys(cnt);
   if (cols.length > 1 && n < pool.length) {
-    const combos = [];
-    const rec = (i, left, cur) => {
-      if (i === cols.length) { if (left === 0) combos.push(cur.slice()); return; }
-      for (let k = Math.min(cnt[cols[i]], left); k >= 0; k--) { cur[i] = k; rec(i + 1, left - k, cur); }
-    };
-    rec(0, n, []);
-    if (combos.length > 1) {
-      const label = c => 'จ่าย ' + cols.map((k, i) => (c[i] ? `${k} ${c[i]}` : '')).filter(Boolean).join(' + ')
-        + '  (เหลือ ' + cols.map((k, i) => (cnt[k] - c[i] > 0 ? `${k} ${cnt[k] - c[i]}` : '')).filter(Boolean).join(' · ') + ')';
-      const r = await H.choose(G, p, `${why ? why + ': ' : ''}จ่าย Element ${n} ใบ — เลือกว่าจะจ่ายสีไหน`, combos.map(label));
-      const c = combos[r] || combos[0];
-      cols.forEach((k, i) => { let m = c[i]; for (const e of pool) if (m > 0 && e.el === k) { e.state = 'rest'; m--; } });
-      G.version++; return true;
-    }
+    const r = await ask(G, p, 'pick', { kind: 'payel', title: `${why ? why + ': ' : ''}จ่าย Element ${n} ใบ — เลือกสีที่จะจ่าย`, n, options: cols.map(k => ({ id: k, label: k, count: cnt[k] })), min: n, max: n });
+    // ตรวจคำตอบ: ต้องได้ n ใบ และไม่เกินจำนวนที่มีของแต่ละสี ไม่งั้นเติมให้จากสีที่เหลือมากสุด
+    const take = {}; let got = 0;
+    for (const k of (Array.isArray(r) ? r : [])) { if (got >= n || !cnt[k] || (take[k] || 0) >= cnt[k]) continue; take[k] = (take[k] || 0) + 1; got++; }
+    while (got < n) { const k = cols.filter(c => (take[c] || 0) < cnt[c]).sort((x, y) => (cnt[y] - (take[y] || 0)) - (cnt[x] - (take[x] || 0)))[0]; take[k] = (take[k] || 0) + 1; got++; }
+    for (const k of cols) { let m = take[k] || 0; for (const x of pool) if (m > 0 && x.el === k) { x.state = 'rest'; m--; } }
+    G.version++; return true;
   }
   return spendElems(G, p, n, el);
 }

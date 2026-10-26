@@ -139,6 +139,8 @@ function handle(act,d,el,e){
     case 'mull':return answer(d.v==='1');
     case 'respond':return answer(d.id===''?null:+d.id);
     case 'choice':{const o=pd.spec.options.find(x=>String(x.id)===d.id);return answer([o?o.id:d.id])}
+    case 'payel':{const s=pd.spec;const o=s.options.find(x=>x.id===d.id);if(!o)return;if(pd.order.filter(k=>k===o.id).length>=o.count)return;pd.order.push(o.id);if(pd.order.length>=s.n)return answer(pd.order.slice());return render()}
+    case 'payclear':pd.order=[];return render();
     case 'pickc':{const id=+d.id;const s=pd.spec;const max=s.max||1;const i=pd.order.indexOf(id);if(i>=0)pd.order.splice(i,1);else{if(max===1)pd.order=[id];else if(pd.order.length<max)pd.order.push(id)}return render()}
     case 'pickok':return answer(pd.order.slice());
     case 'pickskip':return answer([]);

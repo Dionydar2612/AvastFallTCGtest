@@ -21,6 +21,12 @@ function pendingModalHTML(){
   if(pd.kind==='pick'){
     if(s.kind==='units'||s.kind==='attackTarget')return '';
     const sel=pd.order;
+    if(s.kind==='payel'){
+      const got={};sel.forEach(k=>{got[k]=(got[k]||0)+1});
+      const btns=s.options.map(o=>{const left=o.count-(got[o.id]||0);return `<button class="elpay ${left<=0?'zero':''}" data-act="payel" data-id="${esc(o.id)}" ${left<=0?'disabled':''} aria-label="จ่าย ${esc(o.id)}"><span class="eli">${elIcon(o.id,46)}</span><b class="eln">${left}</b><small>${esc(o.id)}</small></button>`}).join('');
+      const chosen=sel.map(k=>elIcon(k,26)).join('')||'<span class="muted">ยังไม่ได้เลือก</span>';
+      return `<div class="ov"><div class="dlg narrow"><h2>${esc(s.title)}</h2><p class="muted">กดที่สีเพื่อจ่ายทีละใบ (เลขใต้ไอคอน = จำนวนที่เหลือ) กดครบ ${s.n} ใบแล้วจะจ่ายให้ทันที</p><div class="elpays">${btns}</div><div class="elsel"><span>จะจ่าย ${sel.length}/${s.n}:</span>${chosen}</div><div class="acts"><button class="btn" data-act="payclear" ${sel.length?'':'disabled'}>ล้างที่เลือก</button></div></div></div>`;
+    }
     if(s.kind==='choice')return `<div class="ov"><div class="dlg narrow"><h2>${esc(s.title)}</h2><div class="acts" style="justify-content:flex-start">${s.options.map(o=>`<button class="btn" data-act="choice" data-id="${esc(o.id)}">${esc(o.label)}</button>`).join('')}</div></div></div>`;
     if(s.kind==='names'){
       const P=G.players[pd.p];const cnt={};P.deck.forEach(c=>cnt[c.def.name]=(cnt[c.def.name]||0)+1);
