@@ -8,7 +8,7 @@ const PACK = {
   size: 8,                         // จำนวนการ์ดต่อซอง
   commonSlots: 7,                  // ช่อง Common (rarity C)
   // ช่องสุดท้าย (Rare slot): น้ำหนักการสุ่มของแต่ละ rarity — ถ้า rarity ไหนไม่มีการ์ดในชุด จะถูกข้ามอัตโนมัติ
-  rareSlot: { R: 88, SR: 12 },
+  rareSlot: { R: 84, SR: 14, SSR: 2 },
   noDupInPack: true                // ในซองเดียวกันไม่ให้ใบซ้ำ (ถ้ามีการ์ดให้เลือกพอ)
 };
 const KEY = 'af-collection-v1';
@@ -44,7 +44,7 @@ function openPack(cards) {
     out.push(pick(by[r] || commons, taken));
   }
   // เรียงให้ใบหายากอยู่ท้าย (เปิดทีหลังสุด)
-  const rank = { C: 0, R: 1, SR: 2 };
+  const rank = { C: 0, R: 1, SR: 2, SSR: 3 };
   return out.sort((a, b) => (rank[a.rarity] || 0) - (rank[b.rarity] || 0));
 }
 
