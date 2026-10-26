@@ -27,7 +27,11 @@ app.use(express.json({ limit: "20kb" }));
 
 // ---------- รูป + หน้าเว็บ ----------
 app.use("/images", express.static(store.imgDir, { maxAge: "1d", setHeaders: (r) => r.setHeader("Access-Control-Allow-Origin", "*") }));
-app.use("/cards", express.static(path.join(__dirname, "public"), { maxAge: "7d", index: "index.html" }));
+app.use("/cards", express.static(path.join(__dirname, "public"), {
+  maxAge: "7d", index: "index.html",
+  // โค้ดหน้าเว็บ (html/js/css) ให้เบราว์เซอร์ตรวจเวอร์ชันใหม่ทุกครั้ง ไม่งั้นแก้แล้วผู้ใช้ยังเห็นของเก่าได้ถึง 7 วัน (รูปการ์ดยังแคชตามเดิม)
+  setHeaders: (res, file) => { if (/\.(html|js|css)$/i.test(file)) res.setHeader("Cache-Control", "no-cache"); },
+}));
 
 // ---------- API ----------
 const api = express.Router();
