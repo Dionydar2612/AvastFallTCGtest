@@ -342,20 +342,24 @@
   function hideZoom() { if (zEl) zEl.classList.remove('on'); zFor = null; }
   function placeZoom(anchor) {
     const r = anchor.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, gap = 12;
-    const h = Math.min(vh - 24, 700), w = Math.min(Math.round(h * 710 / 1004), vw - 24);
-    const hh = Math.round(w * 1004 / 710);
+    const w = Math.min(360, vw - 24);
+    zEl.style.width = w + 'px';
+    const img = zEl.querySelector('img'); img.style.maxHeight = Math.max(160, vh - 24 - zEl.querySelector('.zt').offsetHeight - 24) + 'px';
+    const h = zEl.offsetHeight;
     const room = { right: vw - r.right, left: r.left };
     let x = room.right >= w + gap + 8 || room.right >= room.left ? r.right + gap : r.left - gap - w;
     x = Math.max(8, Math.min(x, vw - w - 8));
-    let y = r.top + r.height / 2 - hh / 2;
-    y = Math.max(12, Math.min(y, vh - hh - 12));
-    zEl.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${hh}px`;
+    const y = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, vh - h - 8));
+    zEl.style.left = x + 'px'; zEl.style.top = y + 'px';
   }
   function showZoom(anchor) {
-    const d = DEFS[anchor.dataset.z]; if (!d || !d.img) return hideZoom();
-    if (!zEl) { zEl = document.createElement('div'); zEl.id = 'dzoom'; zEl.setAttribute('aria-hidden', 'true'); zEl.innerHTML = '<img alt="">'; document.body.appendChild(zEl); }
-    const im = zEl.firstChild; if (im.getAttribute('src') !== d.img) im.src = d.img; im.alt = d.name;
-    zFor = anchor; placeZoom(anchor); zEl.classList.add('on');
+    const d = DEFS[anchor.dataset.z]; if (!d) return hideZoom();
+    if (!zEl) { zEl = document.createElement('div'); zEl.id = 'dzoom'; zEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(zEl); }
+    const fx = (d.fx || []).map(f => `<p>${f[0] ? `<span class="kw ${esc(String(f[0]).split(' ')[0])}">${esc(f[0])}</span> ` : ''}${esc(f[1])}</p>`).join('') || '<p class="zn">ไม่มีเอฟเฟกต์</p>';
+    zEl.innerHTML = `<div class="zi">${d.img ? `<img src="${esc(d.img)}" alt="">` : ''}</div>
+      <div class="zt"><h3>${esc(d.name)}</h3><div class="zm">${d.els.map(e => ico(e, 14)).join('')} <span>${esc(d.kind)}</span> ${costTxt(d) ? `<span>${esc(costTxt(d))}</span>` : ''} ${d.tribe ? `<span>${esc(d.tribe)}</span>` : ''} <span>${esc(d.id)}</span></div>${fx}</div>`;
+    zFor = anchor; zEl.classList.add('on'); placeZoom(anchor);
+    const im = zEl.querySelector('img'); if (im) im.onload = () => { if (zFor === anchor) placeZoom(anchor); };
   }
   function initZoom() {
     if (!canHover) return;
