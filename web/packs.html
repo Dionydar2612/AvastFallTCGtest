@@ -3,20 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>เปิดซอง BT01 · AvastFall TCG</title>
+<title>เปิดซอง · AvastFall TCG</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap">
 <link rel="stylesheet" href="css/packs.css">
 </head>
 <body>
 <main id="pk">
   <header class="pk-head">
-    <h1>เปิดซอง <span class="pk-set" id="setName">BT01</span></h1>
-    <div class="pk-tabs" role="tablist">
+    <div class="pk-title">
+      <button class="chip" id="back" hidden>← เลือกชุด</button>
+      <h1>เปิดซอง <span class="pk-set" id="setName" hidden></span></h1>
+    </div>
+    <div class="pk-tabs" id="tabs" role="tablist" hidden>
       <button class="chip on" data-v="open" role="tab">เปิดซอง</button>
       <button class="chip" data-v="col" role="tab">คอลเลกชัน <b id="colCount">0</b></button>
     </div>
   </header>
-  <section id="vOpen"></section>
+  <section id="vSets"></section>
+  <section id="vOpen" hidden></section>
   <section id="vCol" hidden></section>
 </main>
 <div id="zoom" hidden><img alt=""></div>

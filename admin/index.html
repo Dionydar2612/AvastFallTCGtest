@@ -34,6 +34,12 @@ button:disabled{opacity:.4;cursor:not-allowed}button.del{border-color:var(--bad)
 .drop{border:3px dashed var(--ink);border-radius:14px;padding:26px;text-align:center}.drop.over{background:var(--pap)}
 ul.l{margin:6px 0;padding-left:20px}
 #login{max-width:380px;margin:60px auto}
+dialog{border:3px solid var(--ink);border-radius:14px;background:var(--card);color:var(--ink);box-shadow:4px 4px 0 var(--ink);padding:18px;max-width:440px;width:92vw}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips button{border-radius:99px;padding:3px 14px}.chips button.on{background:var(--ink);color:var(--bg)}
+.paste{border:3px dashed var(--ink);border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--pap)}
+.paste textarea{background:var(--card);margin-top:6px}
+button.rar{border-color:#1b4aa8;color:#1b4aa8}
 [hidden]{display:none!important}
 </style></head><body><main>
 
@@ -80,6 +86,12 @@ ul.l{margin:6px 0;padding-left:20px}
     <h2 id="singleTitle">เพิ่มการ์ดทีละ 1 ใบ (กรอกข้อมูลเอง)</h2>
     <div id="editBanner" class="msg warn" hidden></div>
     <p class="mut">กรอกข้อมูลตามช่องด้านล่าง รหัสการ์ดจะสร้างให้อัตโนมัติจากเด็ค + เลขการ์ด + เวอร์ชันพิเศษ ตรวจตัวอย่างก่อนกดบันทึก ข้อมูลจะไม่ถูกบันทึกจนกว่าจะยืนยัน</p>
+    <div class="paste" id="pasteBox">
+      <b>📋 วางจากคลิปบอร์ด (เติมฟอร์มให้อัตโนมัติ)</b>
+      <p class="mut" style="margin:2px 0">กด <b>Ctrl+V</b> (หรือ ⌘V) ตรงไหนของหน้านี้ก็ได้ หรือวางในช่องด้านล่าง · รองรับ <b>แถวที่คัดลอกจาก Excel/Google Sheets</b> (มีหรือไม่มีหัวคอลัมน์), <b>JSON</b> และ <b>ข้อความการ์ด</b> เช่น <code>ชื่อ: …</code> <code>ประเภท: …</code> <code>ธาตุ: ไฟ/มืด</code> <code>COST 3 | ATK 5 | DEF 4</code> <code>[AUTO] …</code></p>
+      <div class="row"><button type="button" id="pasteBtn">📋 อ่านจากคลิปบอร์ด</button><span id="pasteMsg" class="mut"></span></div>
+      <textarea id="pasteArea" rows="2" placeholder="วางข้อมูลการ์ดที่นี่ (Ctrl+V)"></textarea>
+    </div>
     <form id="singleForm">
       <h3>1) ข้อมูลหลัก</h3>
       <div class="map">
@@ -89,9 +101,10 @@ ul.l{margin:6px 0;padding-left:20px}
         <label><span class="req">ชื่อการ์ด *</span><input id="sf-name" required maxlength="160" placeholder="ชื่อการ์ด"></label>
         <label><span class="req">ประเภทการ์ด *</span><select id="sf-type" required><option value="">— เลือกประเภท —</option><option>Avatar</option><option>Unit</option><option>Spell</option><option>Ultimate</option></select><small class="mut">Avatar / Unit / Spell / Ultimate</small></label>
         <label><span>ประเภทย่อย</span><input id="sf-sub" placeholder="เช่น Domain"></label>
-        <label><span>ธาตุ</span><input id="sf-element" placeholder="เช่น ไฟ"></label>
+        <label><span>ธาตุ 1</span><select id="sf-element"><option value="">— ไม่ระบุ —</option></select></label>
+        <label><span>ธาตุ 2 (ถ้าเป็น 2 ธาตุ)</span><select id="sf-element2"><option value="">— ไม่มี —</option></select><small class="mut">ใช้กับการ์ด 2 ธาตุ เช่น Avatar ไฟ/มืด</small></label>
         <label><span>เผ่า</span><input id="sf-tribe" placeholder="เช่น มังกร"></label>
-        <label><span>ความหายาก</span><input id="sf-rarity" placeholder="เช่น C / R / SR"></label>
+        <label><span>ความหายาก</span><input id="sf-rarity" list="rarList" placeholder="เช่น C / R / SR / SSR"><datalist id="rarList"><option>C</option><option>R</option><option>SR</option><option>SSR</option><option>UR</option></datalist></label>
         <label><span>Rotation</span><input id="sf-rotation" placeholder="เช่น A"></label>
         <label><span>นักวาด</span><input id="sf-artist" placeholder="ชื่อนักวาด"></label>
         <label><span>รูปการ์ด (ไม่บังคับ)</span><input id="sf-image" type="file" accept="image/jpeg,image/png,image/webp"><small class="mut">JPG/PNG/WEBP ไม่เกิน 5MB</small></label>
@@ -122,7 +135,7 @@ ul.l{margin:6px 0;padding-left:20px}
   <section id="t-cards" class="box" hidden>
     <h2>การ์ดทั้งหมด <span id="cardCnt" class="mut"></span></h2>
     <div class="row"><input id="cardQ" placeholder="ค้นหา id / ชื่อ" style="flex:1"><label><input type="checkbox" id="noImgOnly"> เฉพาะที่ยังไม่มีรูป</label></div>
-    <table class="tbl"><thead><tr><th>รูป</th><th>id</th><th>ชื่อ</th><th>ประเภท</th><th>ธาตุ</th><th></th></tr></thead><tbody id="cardRows"></tbody></table>
+    <table class="tbl"><thead><tr><th>รูป</th><th>id</th><th>ชื่อ</th><th>ประเภท</th><th>ธาตุ</th><th>Rarity</th><th></th></tr></thead><tbody id="cardRows"></tbody></table>
   </section>
 
   <section id="t-decks" class="box" hidden>
@@ -160,6 +173,16 @@ ul.l{margin:6px 0;padding-left:20px}
   </section>
 </div>
 
+<dialog id="rarDlg">
+  <h2 style="margin-top:0">＋ เพิ่มความหายาก</h2>
+  <p id="rarSrc" class="mut" style="margin:0"></p>
+  <p style="margin:8px 0 0">คัดลอกข้อความการ์ดใบนี้ไปเป็นการ์ดใบใหม่ <b>ที่เลขการ์ดเดิม</b> แต่เปลี่ยนความหายาก เลือกความหายาก:</p>
+  <div class="chips" id="rarChips"></div>
+  <div class="row"><label>หรือพิมพ์เอง: <input id="rarCustom" maxlength="8" size="8" placeholder="เช่น SP"></label></div>
+  <div id="rarPrev" class="msg" style="margin:6px 0"></div>
+  <div class="row" style="justify-content:flex-end"><button type="button" id="rarCancel">ยกเลิก</button><button type="button" class="pri" id="rarOk">คัดลอกไปที่ฟอร์ม</button></div>
+</dialog>
+<script src="/admin/clip.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -257,16 +280,16 @@ function renderRes(r){
 $("preview").onclick=()=>run(true);$("commit").onclick=()=>run(false);
 
 /* ---------- เพิ่มการ์ดทีละใบ ---------- */
-const SF_KEYS=["deck","no","variant","name","type","sub","element","tribe","rarity","rotation","artist","cost","cri","atk","def","sc","effect1_keyword","effect1_text","effect2_keyword","effect2_text","effect3_keyword","effect3_text","effect4_keyword","effect4_text","effect5_keyword","effect5_text","flavor"];
+const SF_KEYS=["deck","no","variant","name","type","sub","element","element2","tribe","rarity","rotation","artist","cost","cri","atk","def","sc","effect1_keyword","effect1_text","effect2_keyword","effect2_text","effect3_keyword","effect3_text","effect4_keyword","effect4_text","effect5_keyword","effect5_text","flavor"];
 let editingId=null;
 function setLocked(on){for(const k of ["deck","no","variant"])$("sf-"+k).readOnly=on}
 function stopEdit(){editingId=null;setLocked(false);show($("editBanner"),false);$("singleTitle").textContent="เพิ่มการ์ดทีละ 1 ใบ (กรอกข้อมูลเอง)";$("singleForm").querySelector("button[type=reset]").textContent="ล้างฟอร์ม"}
 function startEdit(id){
   const c=CARDS.find(x=>x.id===id);if(!c)return;
   const deck=c.deck||"",no=String(c.no||""),variant=c.id.slice((deck+"-"+no).length);
-  const vals={...c,deck,no,variant};
+  const vals={...c,deck,no,variant,...elVals(c)};
   (c.effects||[]).forEach((e,i)=>{vals["effect"+(i+1)+"_keyword"]=e.keyword||"";vals["effect"+(i+1)+"_text"]=e.text||""});
-  for(const k of SF_KEYS){const el=$("sf-"+k);if(el)el.value=vals[k]??""}
+  fillForm(vals);
   $("sf-image").value="";editingId=c.id;setLocked(true);
   $("singleTitle").textContent="แก้ไขการ์ด "+c.id;
   $("editBanner").innerHTML=`<div class="row">${c.image?`<img class="thumb" style="width:72px;height:100px" src="${esc(c.image)}">`:""}<div><b>กำลังแก้ไข ${esc(c.id)} – ${esc(c.name)}</b><br>รหัส เด็ค และเลขการ์ดเปลี่ยนไม่ได้ · อยากเปลี่ยนรูป ให้เลือกไฟล์ในช่อง "รูปการ์ด" (ไม่เลือก = ใช้รูปเดิม) · แก้เสร็จกด ตรวจสอบข้อมูล แล้วกดยืนยัน</div></div>`;
@@ -285,7 +308,7 @@ $("singleForm").addEventListener("change",e=>{invalidateSingle();if(e.target.id=
 $("singleForm").addEventListener("reset",()=>{stopEdit();setTimeout(()=>{invalidateSingle();$("singlePreviewBox").innerHTML=""},0)});
 $("singlePreview").onclick=()=>{
   const d=singleData(), errs=[];
-  if(!d.deck)errs.push("เลือกเด็ค/ซีรีส์");if(!/^\d{1,4}$/.test(d.no))errs.push("เลขการ์ดต้องเป็นตัวเลข 1–4 หลัก");if(d.variant&&!/^[A-Za-z0-9]+$/.test(d.variant))errs.push("เวอร์ชันพิเศษใช้ A–Z/0–9 เท่านั้น");if(!d.name)errs.push("กรอกชื่อการ์ด");if(!d.type)errs.push("เลือกประเภทการ์ด");
+  if(!d.deck)errs.push("เลือกเด็ค/ซีรีส์");if(!/^\d{1,4}$/.test(d.no))errs.push("เลขการ์ดต้องเป็นตัวเลข 1–4 หลัก");if(d.element2&&!d.element)errs.push("เลือกธาตุ 1 ก่อนเลือกธาตุ 2");if(d.element2&&d.element2===d.element)errs.push("ธาตุ 1 และธาตุ 2 ซ้ำกัน");if(d.variant&&!/^[A-Za-z0-9]+$/.test(d.variant))errs.push("เวอร์ชันพิเศษใช้ A–Z/0–9 เท่านั้น");if(!d.name)errs.push("กรอกชื่อการ์ด");if(!d.type)errs.push("เลือกประเภทการ์ด");
   for(let i=1;i<=5;i++)if(d[`effect${i}_keyword`]&&!d[`effect${i}_text`])errs.push(`เอฟเฟกต์ ${i}: กรุณาใส่ข้อความด้วย`);
   const f=$("sf-image").files[0];if(f&&f.size>5*1024*1024)errs.push("รูปต้องมีขนาดไม่เกิน 5MB");
   const id=singleId(d);if(!editingId&&CARDS.some(c=>c.id.toLowerCase()===id.toLowerCase()))errs.push(`รหัส ${id} มีอยู่ในระบบแล้ว`);
@@ -293,28 +316,100 @@ $("singlePreview").onclick=()=>{
   const effects=[];for(let i=1;i<=5;i++)if(d[`effect${i}_text`])effects.push({keyword:d[`effect${i}_keyword`],text:d[`effect${i}_text`]});
   const imagePreview=f?`<p>รูปใหม่: ${esc(f.name)} (${(f.size/1024).toFixed(0)} KB)</p>`:(editingId?"<p>ไม่ได้เลือกรูปใหม่ — ใช้รูปเดิม</p>":"<p>ยังไม่ได้เลือกรูป — สามารถอัปโหลดภายหลังได้</p>");
   const stats=["cost","cri","atk","def","sc"].filter(k=>d[k]!=="").map(k=>`${k.toUpperCase()}: ${d[k]}`);
-  $("singlePreviewBox").innerHTML=`<div class="msg ok"><b>ตรวจสอบตัวอย่างการ์ด</b><p><b>รหัส:</b> ${esc(id)}<br><b>ชื่อ:</b> ${esc(d.name)}<br><b>ประเภท:</b> ${esc(d.type)}<br><b>เด็ค:</b> ${esc(d.deck)}<br><b>ประเภทย่อย:</b> ${esc(d.sub||"—")} · <b>ธาตุ:</b> ${esc(d.element||"—")} · <b>เผ่า:</b> ${esc(d.tribe||"—")}<br><b>ค่าสถานะ:</b> ${esc(stats.join(" · ")||"ไม่ได้ระบุ")}<br><b>เอฟเฟกต์:</b> ${effects.length?effects.map((e,i)=>`${i+1}. ${esc(e.keyword?`[${e.keyword}] `:"")}${esc(e.text)}`).join("<br>"):"ไม่มี"}<br><b>Flavor:</b> ${esc(d.flavor||"—")}</p>${imagePreview}<p>หากถูกต้อง กด “ยืนยันและบันทึกการ์ด”</p></div>`;
+  $("singlePreviewBox").innerHTML=`<div class="msg ok"><b>ตรวจสอบตัวอย่างการ์ด</b><p><b>รหัส:</b> ${esc(id)}<br><b>ชื่อ:</b> ${esc(d.name)}<br><b>ประเภท:</b> ${esc(d.type)}<br><b>เด็ค:</b> ${esc(d.deck)}<br><b>ประเภทย่อย:</b> ${esc(d.sub||"—")} · <b>ธาตุ:</b> ${esc([d.element,d.element2].filter(Boolean).join(" / ")||"—")} · <b>เผ่า:</b> ${esc(d.tribe||"—")}<br><b>ค่าสถานะ:</b> ${esc(stats.join(" · ")||"ไม่ได้ระบุ")}<br><b>เอฟเฟกต์:</b> ${effects.length?effects.map((e,i)=>`${i+1}. ${esc(e.keyword?`[${e.keyword}] `:"")}${esc(e.text)}`).join("<br>"):"ไม่มี"}<br><b>Flavor:</b> ${esc(d.flavor||"—")}</p>${imagePreview}<p>หากถูกต้อง กด “ยืนยันและบันทึกการ์ด”</p></div>`;
   singleChecked=true;$("singleSave").disabled=false;
 };
 $("singleSave").onclick=async()=>{
   if(!singleChecked)return;const d=singleData();if(!confirm(`${editingId?"ยืนยันแก้ไขการ์ด":"ยืนยันบันทึกการ์ด"} ${singleId(d)} – ${d.name} ?`))return;
   const fd=new FormData();for(const [k,v] of Object.entries(d))fd.append(k,v);const f=$("sf-image").files[0];if(f)fd.append("image",f);
   $("singleSave").disabled=true;$("singlePreviewBox").innerHTML='<p class="mut">กำลังบันทึกการ์ด…</p>';
-  try{const wasEdit=!!editingId;const r=await api(wasEdit?"/cards/"+encodeURIComponent(editingId):"/cards",{method:wasEdit?"PUT":"POST",body:fd});$("singlePreviewBox").innerHTML=`<div class="msg ok">${wasEdit?"แก้ไขการ์ด":"บันทึกการ์ด"} ${esc(r.card.id)} สำเร็จ${r.imageSaved?(wasEdit?" และเปลี่ยนรูปการ์ดแล้ว":" พร้อมรูปภาพ"):(wasEdit?"":" (ยังไม่มีรูปภาพ)")}</div>`;stopEdit();$("singleForm").reset();invalidateSingle();loadAll()}
+  try{const wasEdit=!!editingId;const r=await api(wasEdit?"/cards/"+encodeURIComponent(editingId):"/cards",{method:wasEdit?"PUT":"POST",body:fd});const okHtml=`<div class="msg ok">${wasEdit?"แก้ไขการ์ด":"บันทึกการ์ด"} ${esc(r.card.id)} สำเร็จ${r.imageSaved?(wasEdit?" และเปลี่ยนรูปการ์ดแล้ว":" พร้อมรูปภาพ"):(wasEdit?"":" (ยังไม่มีรูปภาพ)")}</div>`;stopEdit();$("singleForm").reset();invalidateSingle();setTimeout(()=>{$("singlePreviewBox").innerHTML=okHtml},0);loadAll()}
   catch(e){$("singlePreviewBox").innerHTML=`<div class="msg bad">บันทึกไม่สำเร็จ: ${esc(e.message)}</div>`;$("singleSave").disabled=false}
 };
 
+/* ---------- เพิ่ม Rarity (คัดลอกการ์ดเดิม เลขเดิม เปลี่ยนความหายาก) ---------- */
+let rarSrc=null,rarPick="";
+const RARS=["SR","SSR","UR","R"];
+function rarId(c,r){const base=c.deck+"-"+c.no;return base+r}
+function rarRefresh(){
+  const r=($("rarCustom").value.trim()||rarPick).replace(/[^A-Za-z0-9]/g,""),id=r?rarId(rarSrc,r):"";
+  [...$("rarChips").children].forEach(b=>b.classList.toggle("on",!$("rarCustom").value.trim()&&b.dataset.r===rarPick));
+  const dup=id&&CARDS.some(x=>x.id.toLowerCase()===id.toLowerCase());
+  $("rarPrev").className="msg "+(!r?"warn":dup?"bad":"ok");
+  $("rarPrev").innerHTML=!r?"เลือกความหายาก":dup?`มีการ์ด <b>${esc(id)}</b> อยู่แล้ว — ไปกด “แก้ไข” ที่ใบนั้นแทน`:`จะสร้างเป็นรหัส <b>${esc(id)}</b> · ความหายาก <b>${esc(r)}</b> · ข้อความ/ธาตุ/ค่าสถานะ/เอฟเฟกต์เหมือนใบเดิม (ยังไม่บันทึกจนกว่าจะกดยืนยันในฟอร์ม)`;
+  $("rarOk").disabled=!r||dup;
+}
+function openRar(id){
+  rarSrc=CARDS.find(x=>x.id===id);if(!rarSrc)return;
+  const have=new Set(CARDS.filter(x=>x.deck===rarSrc.deck&&x.no===rarSrc.no).map(x=>x.rarity));
+  const opts=RARS.filter(r=>r!==rarSrc.rarity);
+  rarPick=opts.find(r=>!CARDS.some(x=>x.id.toLowerCase()===rarId(rarSrc,r).toLowerCase()))||opts[0];
+  $("rarSrc").innerHTML=`ต้นฉบับ: <b>${esc(rarSrc.id)}</b> ${esc(rarSrc.name)} (${esc(rarSrc.rarity||"ไม่ระบุ")})`;
+  $("rarChips").innerHTML=opts.map(r=>`<button type="button" data-r="${r}">${r}</button>`).join("");
+  $("rarCustom").value="";rarRefresh();$("rarDlg").showModal();
+}
+$("rarChips").onclick=e=>{const b=e.target.closest("button");if(!b)return;rarPick=b.dataset.r;$("rarCustom").value="";rarRefresh()};
+$("rarCustom").oninput=rarRefresh;$("rarCancel").onclick=()=>$("rarDlg").close();
+$("rarOk").onclick=()=>{
+  const r=($("rarCustom").value.trim()||rarPick).replace(/[^A-Za-z0-9]/g,"");if(!r||!rarSrc)return;
+  const c=rarSrc;$("rarDlg").close();stopEdit();
+  const vals={...c,deck:c.deck,no:String(c.no),variant:r,rarity:r,...elVals(c)};
+  (c.effects||[]).forEach((e,i)=>{vals["effect"+(i+1)+"_keyword"]=e.keyword||"";vals["effect"+(i+1)+"_text"]=e.text||""});
+  for(let i=(c.effects||[]).length+1;i<=5;i++){vals["effect"+i+"_keyword"]="";vals["effect"+i+"_text"]=""}
+  fillForm(vals);$("sf-image").value="";
+  $("singleTitle").textContent="เพิ่มความหายาก "+r+" ให้ "+c.id;
+  $("editBanner").innerHTML=`<b>คัดลอกจาก ${esc(c.id)} – ${esc(c.name)}</b> → สร้างใบใหม่รหัส <b>${esc(rarId(c,r))}</b> (ความหายาก ${esc(r)})<br>ข้อมูลเหมือนใบเดิมทุกอย่าง แก้ไขเพิ่มได้ · ใบใหม่ใช้รูปของตัวเองจึงต้องเลือกรูปในช่อง “รูปการ์ด” (ไม่ใส่ก็ได้ อัปโหลดทีหลังได้) · เสร็จแล้วกด ตรวจสอบข้อมูล แล้วกดยืนยัน<br>เมื่อบันทึก การ์ดใบนี้จะเข้าซองของชุด ${esc(c.deck)} ให้เองตามความหายาก`;
+  show($("editBanner"));invalidateSingle();$("singlePreviewBox").innerHTML="";
+  [...$("tabs").children].forEach(x=>x.classList.toggle("on",x.dataset.t==="single"));
+  ["import","single","cards","decks","images","notes","backups"].forEach(t=>show($("t-"+t),t==="single"));scrollTo(0,0);
+};
+
+/* ---------- วางจากคลิปบอร์ด ---------- */
+function applyClip(text){
+  const kws=[...new Set(CARDS.flatMap(c=>(c.effects||[]).map(e=>e.keyword)))].filter(Boolean);
+  const r=ClipCard.parse(text,kws),f=r.fields,keys=Object.keys(f);
+  if(!keys.length){$("pasteMsg").innerHTML='<span style="color:var(--bad)">อ่านข้อมูลการ์ดไม่ออก — ลองวางแถวจาก Excel, JSON หรือ “ชื่อ: …” ต่อบรรทัด</span>';return false}
+  if(keys.some(k=>/^effect\d_/.test(k)))for(let i=1;i<=5;i++){$("sf-effect"+i+"_keyword").value="";$("sf-effect"+i+"_text").value=""}
+  if(f.element&&!f.element2)$("sf-element2").value="";
+  fillElementSelects([f.element,f.element2]);
+  for(const k of keys){const el=$("sf-"+k);if(el)el.value=f[k]}
+  // ถ้าธาตุที่อ่านได้ไม่ตรงกับตัวเลือก (พิมพ์ผิด) ให้เตือน
+  const bad=[f.element,f.element2].filter(e=>e&&!ELEMENTS.includes(e));
+  invalidateSingle();$("singlePreviewBox").innerHTML="";
+  $("pasteMsg").innerHTML=`<span style="color:var(--ok)">✔ เติมแล้ว ${keys.length} ช่อง (${esc(r.note)})</span>${bad.length?` <span style="color:var(--warn)">· ธาตุ “${esc(bad.join(", "))}” ยังไม่มีในระบบ ไอคอนจะไม่แสดง</span>`:""} · ตรวจความถูกต้องแล้วกด “ตรวจสอบข้อมูล”`;
+  return true;
+}
+$("pasteArea").addEventListener("paste",e=>{const t=(e.clipboardData||window.clipboardData).getData("text");e.preventDefault();if(applyClip(t))$("pasteArea").value=""});
+$("pasteBtn").onclick=async()=>{
+  try{applyClip(await navigator.clipboard.readText())}
+  catch(e){$("pasteMsg").innerHTML='<span style="color:var(--warn)">เบราว์เซอร์ไม่อนุญาตให้อ่านคลิปบอร์ดโดยตรง — กด Ctrl+V ที่หน้านี้ หรือวางในช่องด้านล่างแทน</span>';$("pasteArea").focus()}
+};
+document.addEventListener("paste",e=>{   // วางที่ไหนก็ได้ในแท็บ "เพิ่มการ์ด" (ยกเว้นตอนกำลังพิมพ์ในช่องกรอก)
+  if($("t-single").hidden||$("rarDlg").open)return;
+  const a=document.activeElement;if(a&&a!==document.body&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+  const t=(e.clipboardData||window.clipboardData).getData("text");if(!t.trim())return;e.preventDefault();applyClip(t);
+});
+
 /* ---------- cards ---------- */
 let CARDS=[],DECKS=[];
-async function loadAll(){const j=await api("/cards");CARDS=j.data;DECKS=j.decks;renderCards();renderDecks();renderNoImg()}
+let ELEMENTS=[];
+const elOf=c=>(c.elements&&c.elements.length?c.elements:[c.element]).filter(Boolean);
+const elVals=c=>{const l=elOf(c);return{element:l[0]||"",element2:l[1]||""}};
+function fillElementSelects(extra=[]){
+  for(const id of ["sf-element","sf-element2"]){const sel=$(id),cur=sel.value,first=sel.options[0].outerHTML;
+    const all=[...new Set([...ELEMENTS,...extra,cur].filter(Boolean))];
+    sel.innerHTML=first+all.map(e=>`<option>${esc(e)}</option>`).join("");sel.value=cur}
+}
+function fillForm(vals){fillElementSelects([vals.element,vals.element2]);for(const k of SF_KEYS){const el=$("sf-"+k);if(el)el.value=vals[k]??""}}
+async function loadAll(){const j=await api("/cards");CARDS=j.data;DECKS=j.decks;ELEMENTS=j.elements||[];fillElementSelects();renderCards();renderDecks();renderNoImg()}
 function renderCards(){
   const q=$("cardQ").value.trim().toLowerCase(),noimg=$("noImgOnly").checked;
   const list=CARDS.filter(c=>(!q||(c.id+" "+c.name).toLowerCase().includes(q))&&(!noimg||!c.image));
   $("cardCnt").textContent=`(${list.length}/${CARDS.length})`;
-  $("cardRows").innerHTML=list.slice(0,300).map(c=>`<tr><td>${c.image?`<img class="thumb" src="${esc(c.image)}" loading="lazy">`:'<span class="mut">—</span>'}</td><td>${esc(c.id)}</td><td>${esc(c.name)}</td><td>${esc(c.type)}</td><td>${esc(c.element||"")}</td><td><button class="edit" data-id="${esc(c.id)}">แก้ไข</button> <button class="del" data-id="${esc(c.id)}">ลบ</button></td></tr>`).join("");
+  $("cardRows").innerHTML=list.slice(0,300).map(c=>`<tr><td>${c.image?`<img class="thumb" src="${esc(c.image)}" loading="lazy">`:'<span class="mut">—</span>'}</td><td>${esc(c.id)}</td><td>${esc(c.name)}</td><td>${esc(c.type)}</td><td>${esc(elOf(c).join(" / "))}</td><td>${esc(c.rarity||"")}</td><td><button class="edit" data-id="${esc(c.id)}">แก้ไข</button> <button class="rar" data-id="${esc(c.id)}" title="คัดลอกการ์ดนี้เป็นความหายากใหม่">＋ Rarity</button> <button class="del" data-id="${esc(c.id)}">ลบ</button></td></tr>`).join("");
 }
 $("cardQ").oninput=renderCards;$("noImgOnly").onchange=renderCards;
-$("cardRows").onclick=async e=>{const eb=e.target.closest("button.edit");if(eb)return startEdit(eb.dataset.id);const b=e.target.closest("button.del");if(!b)return;
+$("cardRows").onclick=async e=>{const eb=e.target.closest("button.edit");if(eb)return startEdit(eb.dataset.id);const rb=e.target.closest("button.rar");if(rb)return openRar(rb.dataset.id);const b=e.target.closest("button.del");if(!b)return;
   if(!confirm(`ลบการ์ด ${b.dataset.id} ?  (กู้คืนได้จากแท็บสำรอง)`))return;
   try{await api("/cards/"+encodeURIComponent(b.dataset.id),{method:"DELETE"});loadAll()}catch(e){alert(e.message)}};
 

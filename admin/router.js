@@ -21,6 +21,7 @@ const S = store.state;
 const router = express.Router();
 router.use((_req, res, next) => { res.set({ "X-Robots-Tag": "noindex, nofollow", "Cache-Control": "no-store" }); next(); });
 router.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
+router.get("/clip.js", (_req, res) => res.type("application/javascript").sendFile(path.join(__dirname, "clip.js")));
 
 const api = express.Router();
 const up = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 101 } });
@@ -41,15 +42,21 @@ api.use((req, res, next) => {
   next();
 });
 
-api.get("/cards", (_req, res) => res.json({ data: S.cards, decks: S.decks }));
+api.get("/cards", (_req, res) => res.json({ data: S.cards, decks: S.decks, elements: Object.keys(S.elements) }));
 const CARD_TYPES = ["Avatar", "Unit", "Spell", "Ultimate"];
 const TYPE_ALIAS = { "อวตาร": "Avatar", "ยูนิต": "Unit", "สเปล": "Spell", "อัลติเมท": "Ultimate", "อัลติเมต": "Ultimate" };
 const typeOf = (raw) => CARD_TYPES.find((x) => x.toLowerCase() === raw.toLowerCase()) || TYPE_ALIAS[raw];
 // ใส่ฟิลด์ที่เหลือ (ธาตุ ค่าสถานะ เอฟเฟกต์ ฯลฯ) จากฟอร์มลงในการ์ด · โยน Error ถ้าข้อมูลไม่ถูกต้อง
 function fillCard(card, b) {
-  for (const k of ["sub", "element", "rarity", "rotation", "artist", "tribe", "flavor"]) {
+  for (const k of ["sub", "rarity", "rotation", "artist", "tribe", "flavor"]) {
     const v = String(b[k] || "").trim(); if (v) card[k] = v;
   }
+  // ธาตุ: รับ element (+ element2 สำหรับ 2 ธาตุ) หรือ "ไฟ/มืด" ในช่องเดียว · เก็บแบบเดียวกับตอนนำเข้า Excel (element = ธาตุแรก, elements = ทั้งหมด)
+  const els = [b.element, b.element2].flatMap((v) => String(v || "").split(/[\/,，、]/)).map((x) => x.trim().replace(/^ธาตุ/, "")).filter(Boolean);
+  const uniq = [...new Set(els)];
+  if (uniq.length > 2) throw new Error("การ์ดใบหนึ่งใส่ธาตุได้สูงสุด 2 ธาตุ");
+  if (!uniq.length && String(b.element2 || "").trim()) throw new Error("ใส่ธาตุที่ 1 ก่อนใส่ธาตุที่ 2");
+  if (uniq.length) { card.element = uniq[0]; if (uniq.length > 1) card.elements = uniq; }
   for (const k of ["cost", "cri", "atk", "def", "sc"]) {
     const v = String(b[k] ?? "").trim();
     if (v !== "") { if (!Number.isFinite(Number(v))) throw new Error(`${k.toUpperCase()} ต้องเป็นตัวเลข`); card[k] = Number(v); }
@@ -112,7 +119,7 @@ api.put("/cards/:id", up.single("image"), (req, res) => {
     if (!name) return res.status(400).json({ error: "กรุณากรอกชื่อการ์ด" });
     if (!type) return res.status(400).json({ error: "กรุณาเลือกประเภทการ์ด" });
     const base = { ...old, name, type };
-    for (const k of ["sub", "element", "rarity", "rotation", "artist", "tribe", "flavor", "cost", "cri", "atk", "def", "sc", "effects"]) delete base[k];
+    for (const k of ["sub", "element", "elements", "rarity", "rotation", "artist", "tribe", "flavor", "cost", "cri", "atk", "def", "sc", "effects"]) delete base[k];
     const card = fillCard(base, b);
     const image = readImage(req.file);
     const merged = imp.mergeCards(S.raw, [card], false);
