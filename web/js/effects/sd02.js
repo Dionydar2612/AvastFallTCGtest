@@ -1,137 +1,172 @@
-/* AvastFall TCG – สคริปต์เอฟเฟกต์การ์ดชุด SD02 Record of the Future
-   หนึ่งการ์ด = FX[id] หนึ่งรายการ + (ถ้าจำเป็น) NOTES[id] อธิบายการตีความ
-   ถ้าแก้ข้อความการ์ดใน card-api ให้แก้สคริปต์ตรงนี้ แล้วอัปเดตข้อความใน js/data/snapshot.js ให้ตรงกัน */
-(function (AF) {
-'use strict';
-const H = AF.H, FX = AF.FX = AF.FX || {}, NOTES = AF.notes = AF.notes || {};
-const opp = AF.opp, stat = AF.stat, place = AF.place, log = AF.log;
-const hasName = AF.hasName, tribeHas = AF.tribeHas, addMod = AF.addMod;
-const fxOf = c => FX[c.def.id] || {};
-const { killAdvent, killSpell, myHasName, isKnight, prophecyAb, enterByEffect } = AF.fxKit;
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>การ์ดทั้งหมด – Card Battle</title>
+<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("embed")</script>
+<style>.embed .sitetabs{display:none}.embed main{padding-top:16px}</style>
+<style>
+.sitetabs{display:inline-flex;border:3px solid var(--ink);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:3px 3px 0 var(--ink);margin:0 0 16px}.sitetabs a{padding:6px 18px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap}.sitetabs a.on{background:var(--ink);color:var(--bg)}.sitetabs a+a{border-left:3px solid var(--ink)}
+:root{--bg:#fbfbf7;--ink:#111;--card:#fff;--line:#bfe3ea;--gold:#ffc20e;--mut:#666;--pap:#fff8ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--ink:#f2f2f2;--card:#22252a;--line:#2a3a40;--mut:#aaa;--pap:#2d2a22}}
+:root[data-theme="dark"]{--bg:#15171a;--ink:#f2f2f2;--card:#22252a;--line:#2a3a40;--mut:#aaa;--pap:#2d2a22}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;font-family:'Mali','Noto Sans Thai',Tahoma,sans-serif;color:var(--ink);background:var(--bg) repeating-linear-gradient(transparent 0 31px,var(--line) 31px 32px);min-height:100vh}
+main{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:2rem;margin:0 0 12px}
+.box{border:3px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:4px 4px 0 var(--ink)}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--ink);border-radius:12px;padding:10px 14px;width:100%}
+.search{box-shadow:4px 4px 0 var(--ink);margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.chip{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:99px;padding:4px 14px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--bg)}
+.filters{padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+.filters label{font-weight:700;display:block;margin-bottom:4px}
+.filters input[type=range]{padding:0;border:0;accent-color:var(--ink)}
+.cnt{text-align:center;color:var(--mut);margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.grid button{border:0;background:none;padding:0;cursor:pointer;border-radius:10px;transition:transform .12s}
+.grid button:hover{transform:translateY(-4px)}
+.grid img,.big img{width:100%;display:block;border-radius:10px;border:2px solid var(--ink)}
+.empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:40px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));z-index:9}
+#modal.open{display:flex}
+.dlg{background:var(--card);border-radius:18px;max-width:980px;width:100%;max-height:100%;overflow:auto;padding:24px;display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:24px;position:relative}
+.x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:var(--card);color:var(--ink);font-size:20px;cursor:pointer}
+.nav{position:fixed;top:50%;width:46px;height:46px;border-radius:50%;border:2px solid var(--ink);background:#fff;color:#111;font-size:22px;cursor:pointer;box-shadow:2px 2px 0 #111;transform:translateY(-50%)}
+#prev{left:8px}#next{right:8px}
+.dlg h2{margin:0 44px 4px 0;font-size:1.7rem}
+.code{color:var(--mut);margin-bottom:10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.tag{border-radius:99px;padding:3px 14px;font-weight:700;color:#fff;background:#444;font-size:.9rem}
+.tag.t-Avatar{background:#c0121f}.tag.t-Unit{background:#1b4aa8}.tag.t-Spell{background:#6a2fb0}.tag.t-Ultimate{background:#b8860b}
+.tag.gold{background:var(--gold);color:#111}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));border:3px solid var(--ink);border-radius:14px;text-align:center;margin-bottom:14px;overflow:hidden}
+.stats div{padding:8px 4px;border-right:1px solid var(--mut)}.stats div:last-child{border:0}
+.stats small{display:block;color:var(--mut)}.stats b{font-size:1.6rem}
+h3{color:var(--mut);margin:10px 0 6px}
+.eff{border:3px solid var(--ink);border-radius:14px;padding:12px 16px;background:var(--pap);line-height:1.8}
+.eff p{margin:0 0 8px}
+.kw{display:inline-block;font-weight:700;font-size:.8rem;padding:1px 10px;border-radius:6px;color:#fff;margin-right:6px;background:#1b6fd8}
+.kw.AUTO{background:#2a9d2a}.kw.ACTIVATE{background:#1b6fd8}.kw.COST{background:#222}
+.fl{font-style:italic;color:var(--mut);margin-top:12px}
+@media(max-width:720px){.dlg{grid-template-columns:1fr;padding:16px}.big{max-width:300px;margin:0 auto}h1{font-size:1.5rem}}
 
-/* =============================================================== SD02 Record of the Future */
-FX['SD02-001'] = { abilities: [{ id: 'peek', kw: 'ACTIVATE 1/turn', zone: 'avatar', label: 'เปิดการ์ดบนสุด ถ้าเป็นอาลักษณ์ จั่ว 2',
-  can: ({ G, p }) => G.players[p].deck.length > 0,
-  resolve: async ({ G, p }) => {
-    const t = G.players[p].deck[0]; if (!t) return;
-    log(G, `${G.players[p].name} เปิดการ์ดบนสุด: ${t.def.name}`, p, { reveal: [t.uid] });
-    if (tribeHas(t, 'อาลักษณ์')) { log(G, 'เป็นเผ่า "อาลักษณ์" → จั่ว 2 ใบ', p); H.draw(G, p, 2); }
-  } }] };
-const arrange3 = { resolve: async ({ G, p }) => { await H.arrangeTop(G, p, 3); } };
-FX['SD02-002'] = { advent: arrange3, abilities: [prophecyAb('DEF +1 จนจบเทิร์นคู่แข่ง', async ({ G, self }) => { if (self.zone === 'field') addMod(G, self, { def: 1, until: 'oppTurnEnd' }); })] };
-FX['SD02-003'] = { advent: { resolve: async ({ G, p }) => {
-  const P = G.players[p]; const t = P.deck[0]; if (!t) return;
-  const bottom = await H.yesNo(G, p, `ดูการ์ดบนสุด: ${t.def.name} — ย้ายไปไว้ใต้ Main Deck?`, 'ย้ายไปใต้', 'คงไว้ที่เดิม');
-  if (bottom) place(G, t, 'deckBottom');
-  log(G, `${P.name} ดูการ์ดบนสุดของ Main Deck`, p);
-  await AF.emit(G, 'arrange', { player: p });
-} } };
-FX['SD02-004'] = { advent: arrange3, abilities: [prophecyAb('DEF +1 จนจบเทิร์นคู่แข่ง', async ({ G, self }) => { if (self.zone === 'field') addMod(G, self, { def: 1, until: 'oppTurnEnd' }); })] };
-FX['SD02-005'] = { abilities: [
-  { id: 'lib', kw: 'ACTIVATE 1/turn', zone: 'field', label: 'นอน แล้วจั่ว 1 ทิ้ง 1', can: ({ self }) => self.state === 'stand',
-    pay: async ({ G, self }) => { self.state = 'rest'; },
-    resolve: async ({ G, p }) => { H.draw(G, p, 1); await H.discardFromHand(G, p, 1); } },
-  prophecyAb('ประกาศชื่อ ถ้าตรง จั่วการ์ด 2 ใบ', async ({ G, p }) => { H.draw(G, p, 2); }, { id: 'proph' })] };
-FX['SD02-006'] = {
-  on: { attackDeclared: async ({ G, self, p, item, target }) => {
-    if (target === 'avatar' || target === self || target.owner !== p || item.controller === p || self.zone !== 'field') return;
-    if (AF.standElems(G.players[p]).length < 1) return;
-    const yes = await H.yesNo(G, p, `${self.def.name}: จ่าย 1 Element เพื่อเปลี่ยนเป้าหมายการโจมตีมาที่ใบนี้?`, 'จ่ายและเปลี่ยนเป้าหมาย', 'ไม่');
-    if (yes) { AF.spendElems(G, p, 1); item.target = self; log(G, `เป้าหมายการโจมตีเปลี่ยนมาที่ ${self.def.name}`, p); }
-  } },
-  abilities: [prophecyAb('DEF +2 จนจบเทิร์นคู่แข่ง', async ({ G, self }) => { if (self.zone === 'field') addMod(G, self, { def: 2, until: 'oppTurnEnd' }); })]
-};
-FX['SD02-007'] = { abilities: [prophecyAb('เลือก Unit ฝ่ายละ 1 ใบ วางบนสุด Main Deck', async ({ G, p, self }) => {
-  const mine = await H.pickUnit(G, p, H.myUnits(G, p), 'เลือก Unit ฝ่ายเรา 1 ใบ วางไว้บนสุดของ Main Deck เรา');
-  const theirs = await H.pickUnit(G, p, H.oppUnits(G, p, null, self), 'เลือก Unit ฝ่ายตรงข้าม 1 ใบ วางไว้บนสุดของ Main Deck เขา');
-  for (const u of [mine, theirs]) if (u && u.zone === 'field') { H.removeUnit(G, u, 'deckTop'); log(G, `${u.def.name} ถูกวางไว้บนสุดของ Main Deck`, u.owner); }
-})] };
-FX['SD02-008'] = { advent: { resolve: async ({ G, p }) => {
-  const o = opp(p);
-  const c = await H.choose(G, o, 'ฝ่ายตรงข้ามต้องเลือก 1 อย่าง', ['ให้ฝ่ายเราจั่วการ์ด 2 ใบ', 'ทิ้งการ์ดบนมือของคุณ 2 ใบ']);
-  if (c === 0) H.draw(G, p, 2); else await H.discardFromHand(G, o, 2);
-} } };
-FX['SD02-009'] = {
-  abilities: [prophecyAb('เลือก Unit ฝ่ายตรงข้าม ATK -2 จนจบเทิร์นคู่แข่ง', async ({ G, p, self }) => {
-    const u = await H.pickUnit(G, p, H.oppUnits(G, p, null, self), 'เลือก Unit ฝ่ายตรงข้าม 1 ใบ ได้รับ ATK -2');
-    if (u) addMod(G, u, { atk: -2, until: 'oppTurnEnd' });
-  })],
-  on: { attackDeclared: async ({ G, self, p, attacker, target }) => {
-    if (attacker !== self) return;
-    const t = G.players[p].deck[0]; if (!t) return;
-    log(G, `${self.def.name} โจมตี: เปิดการ์ดบนสุด ${t.def.name}`, p, { reveal: [t.uid] });
-    if (t.def.kind === 'Unit' && target !== 'avatar') { addMod(G, target, { def: -3, until: 'turnEnd' }); log(G, `${target.def.name} ได้รับ DEF -3`, p); }
-  } }
-};
-FX['SD02-010'] = { spell: { resolve: async ({ G, p }) => { await H.arrangeTop(G, p, 3); } },
-  prophecySpell: async ({ G, p }) => { G.players[p].spellDiscountUntil = G.turn + 1; log(G, 'SPELL ทุกใบของเราลดค่าใช้จ่าย 1 Element จนจบเทิร์นฝ่ายตรงข้าม (ขั้นต่ำ 1)', p); } };
-FX['SD02-011'] = { spell: { resolve: async ({ G, p }) => { await H.digTop(G, p, { n: 3, title: 'เลือก Counter 1 ใบขึ้นมือ', filter: c => !!fxOf(c).counter }); } } };
-FX['SD02-012'] = { counter: {
-  when: (G, r, last) => last.controller !== r && last.kind === 'spell' && last.source.def.type === 'Spell',
-  resolve: async ({ G, p, target }) => { H.cancel(G, target); } },
-  prophecySpell: async ({ G, p }) => { H.draw(G, p, 1); } };
-FX['SD02-013'] = { counter: {
-  when: (G, r, last) => last.kind === 'attack' && last.target !== 'avatar' && last.target.owner === r,
-  resolve: async ({ G, p, target }) => { const u = target.target; if (u !== 'avatar' && u.zone === 'field') { addMod(G, u, { def: 3, until: 'battle' }); log(G, `${u.def.name} ได้รับ DEF +3 จนจบการต่อสู้`, p); } } } };
-FX['SD02-014'] = { counter: {
-  when: (G, r, last) => last.kind === 'attack' && last.target !== 'avatar' && last.target.owner === r,
-  resolve: async ({ G, p, target }) => { const a = target.attacker; if (a.zone === 'field') { addMod(G, a, { atk: -3, until: 'battle' }); log(G, `${a.def.name} ได้รับ ATK -3 จนจบการต่อสู้`, p); } } } };
-FX['SD02-015'] = { counter: {
-  when: (G, r, last) => last.kind === 'unit-ability' && last.controller !== r,
-  resolve: async ({ G, p, target }) => { H.cancel(G, target); } } };
-FX['SD02-016'] = { spell: { resolve: async ({ G, p }) => {
-  const O = G.players[opp(p)];
-  const spells = O.hand.filter(c => c.def.type === 'Spell');
-  log(G, `${G.players[p].name} ดูการ์ดบนมือของ ${O.name}`, p);
-  const ch = await H.pickCards(G, p, { title: 'ดูการ์ดบนมือฝ่ายตรงข้าม เลือก Spell สูงสุด 2 ใบเพื่อทิ้ง', cards: spells, optional: true, max: 2, kind: 'reveal', ctx: { all: O.hand.slice() } });
-  for (const c of ch) { place(G, c, 'discard'); log(G, `${c.def.name} ถูกทิ้ง`, opp(p)); }
-} } };
-FX['SD02-017'] = { equip: { def: 1 }, abilities: [{ id: 'pen', kw: 'ACTIVATE 1/turn', zone: 'equip', label: 'ดูบนสุด ถ้าเป็น Counter ให้ผู้สวมใส่ DEF +1',
-  can: ({ G, p }) => G.players[p].deck.length > 0,
-  resolve: async ({ G, p, self }) => {
-    const t = G.players[p].deck[0]; if (!t) return;
-    if (!fxOf(t).counter) { log(G, `${G.players[p].name} ดูการ์ดบนสุด (ไม่ใช่ Counter)`, p); return; }
-    log(G, `${G.players[p].name} เปิดเผย Counter: ${t.def.name}`, p, { reveal: [t.uid] });
-    const bottom = await H.yesNo(G, p, `${t.def.name} เป็น Counter — คงไว้บนสุด หรือย้ายไปใต้ Main Deck?`, 'ย้ายไปใต้', 'คงไว้บนสุด');
-    if (bottom) place(G, t, 'deckBottom');
-    if (self.host && self.host.zone === 'field') { addMod(G, self.host, { def: 1, until: 'oppTurnEnd' }); log(G, `${self.host.def.name} ได้รับ DEF +1 จนจบเทิร์นคู่แข่ง`, p); }
-  } }] };
-FX['SD02-018'] = { on: { arrange: async ({ G, self, p, player }) => {
-  if (player !== p || self.dflag === G.turn) return;
-  self.dflag = G.turn;
-  const t = G.players[p].deck[0]; if (!t) return;
-  if (fxOf(t).counter) { log(G, `${self.def.name}: เปิดเผย ${t.def.name} (Counter) — Counter ใบแรกในเทิร์นถัดไปลดค่าใช้จ่าย 1`, p, { reveal: [t.uid] }); G.players[p].counterDiscount = { turn: G.turn + 1, used: false }; }
-  else log(G, `${self.def.name}: ดูการ์ดบนสุดอีกครั้ง (ไม่ใช่ Counter)`, p);
-} } };
-FX['SD02-019'] = { ultimate: { resolve: async ({ G, p, self }) => {
-  const P = G.players[p];
-  const n = Math.min(3, P.deck.length);
-  if (!n) { log(G, `${self.def.name}: Main Deck ว่าง ประกาศไม่ได้`, p); return; }
-  const pool = [...new Set(P.deck.map(c => c.def.name))];
-  const guesses = [];
-  for (let i = 0; i < n; i++) {
-    const r = await AF.ask(G, p, 'pick', { kind: 'names', title: `${self.def.name}: ประกาศชื่อการ์ดใบที่ ${i + 1} (จาก ${n} ใบบนสุดของ Main Deck)`, options: pool.map(x => ({ id: x, label: x })), min: 1, max: 1, ctx: { prophecy: true } });
-    guesses.push(r && r[0]);
-  }
-  const top = P.deck.slice(0, n);   // เปิดเผยแล้ววางกลับบนสุดตามลำดับเดิม = ไม่ต้องย้ายการ์ด
-  log(G, `${P.name} ประกาศ ${guesses.map(g => `"${g}"`).join(' → ')} — เปิดเผย: ${top.map(c => c.def.name).join(' → ')}`, p, { reveal: top.map(c => c.uid) });
-  const hit = top.map((c, i) => c.def.name === guesses[i]);
-  log(G, `ทายถูก ${hit.filter(Boolean).length}/${n} ใบ (ใบที่ ${hit.map((h, i) => h ? i + 1 : 0).filter(Boolean).join(', ') || '-'})`, p);
-  if (hit[0]) { log(G, 'ใบที่ 1 ถูก: จั่วการ์ด 1 ใบ', p); H.draw(G, p, 1); }
-  if (hit[1]) {
-    const u = await H.pickUnit(G, p, H.oppUnits(G, p, null, self), `${self.def.name}: เลือก Unit ฝ่ายตรงข้าม 1 ใบ ส่งลงกองทิ้ง`);
-    if (u && u.zone === 'field') { H.removeUnit(G, u, 'discard'); log(G, `ใบที่ 2 ถูก: ${u.def.name} ถูกส่งลงกองทิ้ง`, opp(p)); }
-    else log(G, 'ใบที่ 2 ถูก: ไม่มี Unit ฝ่ายตรงข้ามที่เลือกได้', p);
-  }
-  if (hit[2]) { log(G, 'ใบที่ 3 ถูก: สร้างความเสียหายใส่พลังชีวิตฝ่ายตรงข้าม 2 หน่วย', p); H.damageAvatar(G, opp(p), 2, self); }
-} } };
+[hidden]{display:none!important}
+.db-sub{margin:-4px 0 14px;color:var(--mut)}
+.db-wrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+.db-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:8px;align-items:center}
+.db-filters select{padding:6px 10px;border-width:2px}.db-chk{display:flex;gap:6px;align-items:center;font-weight:700}.db-chk input{width:auto}
+.db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+.db-t{display:flex;flex-direction:column;gap:3px;padding:6px;border:2px solid transparent;border-radius:12px}.db-t.in{border-color:var(--ink);background:var(--card)}.db-t.off{opacity:.45}
+.db-img{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;border-radius:10px;width:100%}
+.db-img img,.db-av img,.db-avc img{width:100%;display:block;border-radius:8px;border:2px solid var(--ink)}
+.db-pill{position:absolute;top:4px;right:4px;min-width:24px;height:24px;border-radius:99px;background:var(--gold);color:#111;border:2px solid #111;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.db-nm{font-weight:700;font-size:.82rem;line-height:1.2}.db-mt{font-size:.72rem;color:var(--mut)}
+.db-step{display:flex;gap:6px;align-items:center;justify-content:center}
+.db-step button,.db-elc button{width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;line-height:1;padding:0}
+.db-step button:disabled{opacity:.35;cursor:not-allowed}
+.db-side{padding:14px;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;display:flex;flex-direction:column;gap:10px}
+.db-side>*{flex:none}.db-saved{display:flex;gap:6px}.db-saved select{padding:6px 10px;border-width:2px}
+.db-lbl{font-weight:700;display:block}.db-lbl input{padding:6px 10px;border-width:2px;margin-top:2px}
+.db-head{display:flex;gap:12px;align-items:flex-start}
+.db-av{position:relative;width:96px;flex:none;border:0;background:none;padding:0;cursor:pointer;color:var(--ink);font:inherit}.db-av span{display:block;font-size:.72rem;font-weight:700;margin-top:2px;background:var(--ink);color:var(--bg);border-radius:6px}
+.db-info{flex:1;min-width:0}.db-tot{font-size:1.1rem}.good{color:#1a8a3a;font-weight:700}.bad{color:#c0121f;font-weight:700}
+.db-bar{height:8px;border:2px solid var(--ink);border-radius:99px;overflow:hidden;margin-top:4px}.db-bar i{display:block;height:100%;background:#d9a400}.db-bar i.ok{background:#2a9d2a}.db-bar i.over{background:#c0121f}
+.db-tabs{display:flex;gap:4px}.db-tab{flex:1;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:10px;padding:4px 2px;cursor:pointer}.db-tab.on{background:var(--ink);color:var(--bg)}.db-tab b{margin-left:4px;font-size:.8rem}
+.db-elh{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.db-elg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:4px}.db-elc{display:flex;gap:4px;align-items:center}.db-elc span{flex:1}
+.db-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;min-height:60px}.db-m .db-step{margin-top:3px}.db-m .db-step button{width:24px;height:24px}
+.db-muted{color:var(--mut);font-size:.9rem}
+.db-warn{border:2px solid #c0121f;background:rgba(192,18,31,.1);border-radius:10px;padding:8px 10px;font-size:.85rem}
+.db-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}a.chip{text-decoration:none;display:inline-block}.chip.pri{background:var(--gold);color:#111;font-weight:700}
+.db-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:12px;z-index:20}
+.db-dlg{background:var(--card);padding:20px;max-width:620px;width:100%;max-height:100%;overflow:auto}.db-dlg h2{margin:0 0 8px}
+.db-ta{width:100%;min-height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;border:3px solid var(--ink);border-radius:12px;padding:10px;background:var(--bg);color:var(--ink);margin:8px 0}
+.db-avg{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.db-avc{font:inherit;color:var(--ink);background:none;border:2px solid transparent;border-radius:10px;padding:4px;cursor:pointer;text-align:center}.db-avc.on,.db-avc:hover{border-color:var(--ink)}.db-avc small{display:block;color:var(--mut)}
+.db-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:99px;opacity:0;pointer-events:none;transition:.2s;z-index:30}.db-toast.on{opacity:1;transform:translateX(-50%)}
+.db-topbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.db-topbar h1{margin:0}
+.db-lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:14px}
+.db-deck{display:flex;gap:12px;padding:12px;align-items:flex-start;background:var(--card);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
+.db-dart{width:84px;flex:none}.db-dart img{width:100%;display:block;border-radius:8px;border:2px solid var(--ink)}.db-dinfo{flex:1;min-width:0}.db-dinfo h3{margin:0 0 4px;color:var(--ink);overflow-wrap:anywhere}.db-ds{font-size:.85rem;margin-top:2px}
+.db-add{flex-direction:column;align-items:center;justify-content:center;min-height:150px;font:inherit;font-weight:700;font-size:1.1rem;color:var(--ink);border-style:dashed;cursor:pointer;gap:4px}.db-add span{font-size:2.4rem;line-height:1}.db-add:hover{background:var(--gold);color:#111}
+.chip.danger{background:#c0121f;color:#fff;border-color:#c0121f}
+@media(max-width:900px){.db-wrap{grid-template-columns:1fr}.db-side{position:static;max-height:none}}
+.noimg{aspect-ratio:170/241;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;border:2px solid var(--ink);border-radius:10px;background:var(--pap)}.meta{margin-top:14px;padding-top:10px;border-top:1px dashed var(--mut);font-size:.85rem;color:var(--mut)}</style></head><body><main>
+<nav class="sitetabs" aria-label="เมนูเว็บ"><a class="on" href="/cards/" data-v="cards" aria-current="page">Card List</a><a href="#deckbuilder" data-v="deck">Deckbuilder</a><a href="/" target="_blank" rel="noopener">Playtest ↗</a></nav>
+<div id="v-cards">
+<h1>การ์ดทั้งหมด</h1>
+<p style="margin:-4px 0 12px"><a href="/api/docs" target="_blank" rel="noopener" style="color:var(--ink)">📘 API สำหรับนักพัฒนา</a></p>
+<input id="q" class="search" placeholder="ค้นหาการ์ดด้วยชื่อ เลขการ์ด หรือข้อความในเอฟเฟกต์...">
+<div class="row"><span>เรียงตาม:</span><span id="sorts"></span></div>
+<div class="box filters"><div><label>เด็ค/ซีรีส์</label><select id="fd"><option value="">ทั้งหมด</option></select></div><div><label>Rotation</label><select id="fo"><option value="">ทั้งหมด</option></select></div><div><label>ประเภทการ์ด</label><select id="ft"><option value="">ทั้งหมด</option></select></div><div><label>ธาตุ</label><select id="fe"><option value="">ทั้งหมด</option></select></div><div><label>ความหายาก</label><select id="fr"><option value="">ทั้งหมด</option></select></div><div><label>Keyword</label><select id="fk"><option value="">ทั้งหมด</option></select></div>
+<div><label>Cost สูงสุด: <span id="cv">0</span></label><input id="fc" type="range" min="0" max="10" value="10"></div>
+</div>
+<div class="cnt" id="cnt"></div>
+<div class="grid" id="grid"></div>
+</div>
+<div id="v-deck" hidden></div>
+</main>
+<div id="modal"><button class="nav" id="prev">‹</button><div class="dlg box" id="dlg"></div><button class="nav" id="next">›</button></div>
+<script>
+const $=id=>document.getElementById(id);
+const FIL={fd:"deck",fo:"rot",ft:"type",fe:"el",fr:"rar"};
+const SORTS={no:"ซีรีส์",name:"ชื่อ",type:"ประเภท",cost:"Cost"};
+let ALL=[],list=[],cur=0,sort="no";
+const costOf=c=>c.cost??c.sc??0;
+const uniq=a=>[...new Set(a.filter(Boolean))];
+const ico=(n,s=18)=>{const e=ELEMENTS[n];return e?`<svg width="${s}" height="${s}" viewBox="0 0 18 18" style="vertical-align:-3px"><circle cx="9" cy="9" r="8" fill="#fff" stroke="${e.c}" stroke-width="2"/><path d="${e.p}" fill="${e.c}"/></svg>`:""};
+const pic=c=>c.img?`<img loading="lazy" src="${c.img}" alt="${c.name}">`:`<div class="noimg">${c.name}</div>`;
+function init(){
+ ALL=CARDS.map((c,i)=>{const d=DECKS[c.deck]||{};const m={rot:d.rot,el:d.el,rar:d.rar,art:d.art,...c,i,fx:c.fx||[]};
+  m.code=`${m.deck} ${m.rot||"-"} ${m.no}/${d.total||"?"}`;m.img=(typeof IMAGES!=="undefined"&&IMAGES[c.key||c.deck+"-"+c.no])||c.img||"";return m});
+ for(const[id,k]of Object.entries(FIL))uniq(ALL.map(c=>c[k])).forEach(v=>$(id).insertAdjacentHTML("beforeend",`<option>${v}</option>`));
+ uniq(ALL.flatMap(c=>c.fx.map(e=>e[0].split(" ")[0]))).filter(k=>k!=="COST").forEach(k=>$("fk").insertAdjacentHTML("beforeend",`<option>${k}</option>`));
+ const mx=Math.max(0,...ALL.map(costOf));$("fc").max=mx;$("fc").value=mx;
+ $("sorts").innerHTML=Object.entries(SORTS).map(([k,v])=>`<button class="chip" data-s="${k}">${v}</button>`).join(" ");
+ $("grid").onclick=e=>{const b=e.target.closest("button");if(b)show(+b.dataset.n)};
+ $("sorts").onclick=e=>{if(e.target.dataset.s){sort=e.target.dataset.s;render()}};
+ ["q","fk","fc",...Object.keys(FIL)].forEach(i=>$(i).addEventListener("input",render));
+ $("prev").onclick=()=>show(cur-1);$("next").onclick=()=>show(cur+1);
+ $("modal").onclick=e=>{if(e.target.id==="modal")closeM()};
+ addEventListener("keydown",e=>{if(!$("modal").classList.contains("open"))return;if(e.key==="Escape")closeM();if(e.key==="ArrowLeft")show(cur-1);if(e.key==="ArrowRight")show(cur+1)});
+ render();
+}
+function render(){
+ const q=$("q").value.trim().toLowerCase(),k=$("fk").value,mx=+$("fc").value,v=id=>$(id).value;
+ $("cv").textContent=mx;
+ list=ALL.filter(c=>Object.entries(FIL).every(([id,f])=>!v(id)||c[f]===v(id))&&costOf(c)<=mx&&(!k||c.fx.some(e=>e[0].startsWith(k)))&&(!q||[c.no,c.name,c.code,c.tribe,...c.fx.map(e=>e[1])].join(" ").toLowerCase().includes(q)));
+ list.sort({no:(a,b)=>a.i-b.i,name:(a,b)=>a.name.localeCompare(b.name,"th"),type:(a,b)=>a.type.localeCompare(b.type)||a.i-b.i,cost:(a,b)=>costOf(a)-costOf(b)||a.i-b.i}[sort]);
+ document.querySelectorAll("#sorts .chip").forEach(b=>b.classList.toggle("on",b.dataset.s===sort));
+ $("cnt").innerHTML=`แสดง <b>${list.length}</b> จาก <b>${ALL.length}</b> การ์ด`;
+ $("grid").innerHTML=list.length?list.map((c,n)=>`<button data-n="${n}" aria-label="${c.name}">${pic(c)}</button>`).join(""):'<div class="empty">ไม่พบการ์ดที่ตรงกับเงื่อนไข</div>';
+}
+function show(n){
+ cur=(n+list.length)%list.length;const c=list[cur],d=DECKS[c.deck]||{};
+ const st=c.type==="Unit"?`<div><small>Cost</small><b>${c.cost}</b></div><div><small>CRI</small><b>${c.cri}</b></div><div><small>ATK</small><b>${c.atk}</b></div><div><small>DEF</small><b>${c.def ?? c.defense ?? "-"}</b></div>`:(c.sc!=null?`<div><small>ค่า Element</small><b>${c.sc}</b></div>`:"");
+ const ef=c.fx.length?c.fx.map(e=>`<p>${e[0]?`<span class="kw ${e[0].split(" ")[0]}">${e[0]}</span>`:""}${e[1]}</p>`).join(""):'<p style="color:var(--mut)">ไม่มีเอฟเฟกต์</p>';
+ $("dlg").innerHTML=`<button class="x" onclick="closeM()" aria-label="ปิด">✕</button><div class="big">${pic(c)}</div><div><h2>${c.name}</h2><div class="code">${c.deck}-${c.no}/${d.total||"?"}</div><div class="tags"><span class="tag t-${c.type}">${c.type}</span>${c.sub?`<span class="tag">${c.sub}</span>`:""}<span class="tag gold">${c.deck} ${d.name||""}</span>${(c.els&&c.els.length?c.els:c.el?[c.el]:[]).map(e=>`<span class="tag" style="background:#fff;color:#111;border:2px solid ${(ELEMENTS[e]||{}).c||"#888"}">${ico(e)} ธาตุ${e}</span>`).join("")}${c.rar?`<span class="tag" style="background:#555">Rarity ${c.rar}</span>`:""}${c.rot?`<span class="tag" style="background:#555">Rotation ${c.rot}</span>`:""}</div>${st?`<div class="stats">${st}</div>`:""}${c.tribe?`<h3>เผ่า</h3><div class="tags"><span class="tag" style="background:#555">${c.tribe}</span></div>`:""}<h3>ผลหลัก</h3><div class="eff">${ef}</div>${c.fl?`<div class="fl">${c.fl}</div>`:""}<div class="meta">${c.code}${c.art?` · นักวาด: @${c.art}`:""}${c.rar?` · ความหายาก: ${c.rar}`:""}</div></div>`;
+ $("modal").classList.add("open");
+}
+function closeM(){$("modal").classList.remove("open")}
 
-/* ------------------------------------------------------------- คำอธิบายการตีความ (แสดงในหน้า "ข้อสังเกต" และตัวตรวจการ์ด) */
-NOTES["SD02-002"] = "ACTIVATE 1/turn: ประกาศชื่อการ์ด 1 ใบ แล้วเปิดเผยการ์ดบนสุดของ Main Deck ถ้าตรงจึงได้ผล (ใช้ได้ใน Main Phase เทิร์นละ 1 ครั้งต่อการ์ด) การ์ดที่เปิดเผยยังอยู่บนสุดของ Main Deck ตามเดิม";
-NOTES["SD02-007"] = "ACTIVATE 1/turn: ถ้าประกาศถูก ต้องเลือก Unit ฝ่ายละ 1 ใบ (ถ้ามี) แล้ววางไว้บนสุดของ Main Deck ของฝ่ายนั้น ๆ";
-NOTES["SD02-009"] = "DEF -3 ใส่เป้าหมายการโจมตี จนจบเทิร์น";
-NOTES["SD02-010"] = "ลดค่าใช้จ่าย SPELL ของฝ่ายเราเท่านั้น (ข้อความเขียนว่า \"ทุกใบ\")";
-NOTES["SD02-011"] = "ไม่มีค่าร่ายพิมพ์ไว้บนการ์ด ระบบจึงนับเป็น 0 Element";
-NOTES["SD02-019"] = "ประกาศชื่อการ์ดครบทุกใบก่อน (ใบที่ 1 → 3) แล้วจึงเปิดเผยการ์ดบนสุด 3 ใบ ใบที่ชื่อตรงตามลำดับถือว่าทายถูก การ์ดที่เปิดอยู่บนสุดของ Main Deck ตามลำดับเดิม จึงไม่มีการย้ายการ์ด แล้วทำผลตามลำดับ: ใบที่ 1 จั่ว 1 → ใบที่ 2 ส่ง Unit ฝ่ายตรงข้าม 1 ใบลงกองทิ้ง (ไม่นับเป็นถูกทำลาย) → ใบที่ 3 ดาเมจ 2 ถ้า Main Deck เหลือน้อยกว่า 3 ใบ ประกาศและเปิดเท่าที่มี ใบที่เกินถือว่าทายไม่ถูก ไม่ใช่ Counter อีกต่อไป";
+async function boot(){
+ try{
+  const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+" "+r.status);return r.json()});
+  const [cs,ds,es]=await Promise.all([j("/api/cards?limit=500"),j("/api/decks"),j("/api/elements")]);
+  window.ELEMENTS=es.data;
+  window.DECKS=Object.fromEntries(ds.data.map(d=>[d.id,{name:d.name,total:d.total,rot:d.rotation,el:d.element,rar:d.rarity,art:d.artist}]));
+  window.CARDS=cs.data.map(c=>({deck:c.deck,no:c.no,key:c.id,name:c.name,type:c.type,sub:c.sub,cost:c.cost,cri:c.cri,atk:c.atk,def:c.def,sc:c.sc,tribe:c.tribe,
+    fx:(c.effects||[]).map(e=>[e.keyword,e.text]),fl:c.flavor,el:c.element,els:c.elements,rar:c.rarity,rot:c.rotation,art:c.artist,img:c.image}));
+  init();window.DB&&DB.init();
+ }catch(err){document.getElementById("cnt").textContent="โหลดข้อมูลจาก API ไม่สำเร็จ: "+err.message}
+}
+addEventListener("DOMContentLoaded",boot);
+/* ฝังอยู่ในหน้าเกม: แถบเมนูบนสุดของหน้าหลักเป็นตัวสลับ Card List ↔ Deckbuilder */
+addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
+ if(e.data.afView)window.DB&&DB.show&&DB.show(e.data.afView==="deck"?"deck":"cards");
+ if(e.data.afDeck){if(window.DB&&DB.ready&&DB.ready())DB.openDeck(e.data.afDeck);else window.__afDeckQ=e.data.afDeck}});
 
-})(globalThis.AF = globalThis.AF || {});
+</script>
+<script src="/cards/deckbuilder.js?v=8"></script>
+</body></html>
