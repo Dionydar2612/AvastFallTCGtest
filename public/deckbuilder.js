@@ -340,26 +340,44 @@
   const canHover = window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches;
   let zEl = null, zFor = null;
   function hideZoom() { if (zEl) zEl.classList.remove('on'); zFor = null; }
+  function injectZoomCss() {
+    if (document.getElementById('dzoom-css')) return;
+    const s = document.createElement('style'); s.id = 'dzoom-css';
+    s.textContent = `
+#dzoom{position:fixed;left:0;top:0;z-index:2147483000;box-sizing:border-box;width:360px;max-width:calc(100vw - 16px);padding:10px;pointer-events:none;opacity:0;visibility:hidden;transform:scale(.97);transition:opacity .12s,transform .12s;background:var(--card,#fff);color:var(--ink,#111);border:3px solid var(--ink,#111);border-radius:20px;box-shadow:8px 8px 0 rgba(0,0,0,.35);overflow:hidden;font-size:15px;line-height:1.5}
+#dzoom.on{opacity:1;visibility:visible;transform:none}
+#dzoom .zi{display:flex;justify-content:center}
+#dzoom img{display:block;max-width:100%;width:auto;height:auto;border:3px solid var(--ink,#111);border-radius:14px}
+#dzoom h3{margin:10px 2px 6px;font-size:1.25rem;line-height:1.25}
+#dzoom .zm{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+#dzoom .zc{display:inline-flex;align-items:center;gap:4px;padding:2px 12px;border:2px solid var(--ink,#111);border-radius:99px;font-weight:700;font-size:.85rem;background:var(--card,#fff)}
+#dzoom p{margin:6px 2px 0}#dzoom .zn{color:var(--mut,#666)}
+#dzoom .kw{display:inline-block;margin-right:6px;padding:0 9px;border-radius:7px;background:#111;color:#fff;font-weight:700;font-size:.8rem}
+#dzoom .kw.AUTO,#dzoom .kw.ACTIVATE,#dzoom .kw.COST{background:#111}
+.db-img[data-z],.db-m[data-z]{cursor:zoom-in}
+@media(prefers-reduced-motion:reduce){#dzoom{transition:none}}`;
+    document.head.appendChild(s);
+  }
   function placeZoom(anchor) {
     const r = anchor.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, gap = 12;
-    const w = Math.min(360, vw - 24);
-    zEl.style.width = w + 'px';
-    const img = zEl.querySelector('img'); img.style.maxHeight = Math.max(160, vh - 24 - zEl.querySelector('.zt').offsetHeight - 24) + 'px';
-    const h = zEl.offsetHeight;
+    const img = zEl.querySelector('img');
+    if (img) { img.style.maxHeight = ''; const over = zEl.offsetHeight - (vh - 16); if (over > 0) img.style.maxHeight = Math.max(140, img.offsetHeight - over) + 'px'; }
+    const w = zEl.offsetWidth, h = zEl.offsetHeight;
     const room = { right: vw - r.right, left: r.left };
     let x = room.right >= w + gap + 8 || room.right >= room.left ? r.right + gap : r.left - gap - w;
     x = Math.max(8, Math.min(x, vw - w - 8));
     const y = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, vh - h - 8));
-    zEl.style.left = x + 'px'; zEl.style.top = y + 'px';
+    zEl.style.transform = ''; zEl.style.left = x + 'px'; zEl.style.top = y + 'px';
   }
   function showZoom(anchor) {
     const d = DEFS[anchor.dataset.z]; if (!d) return hideZoom();
+    injectZoomCss();
     if (!zEl) { zEl = document.createElement('div'); zEl.id = 'dzoom'; zEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(zEl); }
-    const fx = (d.fx || []).map(f => `<p>${f[0] ? `<span class="kw ${esc(String(f[0]).split(' ')[0])}">${esc(f[0])}</span> ` : ''}${esc(f[1])}</p>`).join('') || '<p class="zn">ไม่มีเอฟเฟกต์</p>';
-    zEl.innerHTML = `<div class="zi">${d.img ? `<img src="${esc(d.img)}" alt="">` : ''}</div>
-      <div class="zt"><h3>${esc(d.name)}</h3><div class="zm">${d.els.map(e => ico(e, 14)).join('')} <span>${esc(d.kind)}</span> ${costTxt(d) ? `<span>${esc(costTxt(d))}</span>` : ''} ${d.tribe ? `<span>${esc(d.tribe)}</span>` : ''} <span>${esc(d.id)}</span></div>${fx}</div>`;
+    const fx = (d.fx || []).map(f => `<p>${f[0] ? `<span class="kw ${esc(String(f[0]).split(' ')[0])}">${esc(String(f[0]).split(' ')[0])}</span>` : ''}${esc(f[0] && /^\S+\s/.test(f[0]) ? f[0].replace(/^\S+\s+/, '') + ': ' : '')}${esc(f[1])}</p>`).join('') || '<p class="zn">ไม่มีเอฟเฟกต์</p>';
+    const chips = [d.kind, costTxt(d), d.tribe, d.id].filter(Boolean).map(c => `<span class="zc">${esc(c)}</span>`).join('');
+    zEl.innerHTML = `<div class="zi">${d.img ? `<img src="${esc(d.img)}" alt="">` : ''}</div><h3>${d.els.map(e => ico(e, 18)).join('')} ${esc(d.name)}</h3><div class="zm">${chips}</div>${fx}`;
     zFor = anchor; zEl.classList.add('on'); placeZoom(anchor);
-    const im = zEl.querySelector('img'); if (im) im.onload = () => { if (zFor === anchor) placeZoom(anchor); };
+    const im = zEl.querySelector('img'); if (im && !im.complete) im.onload = () => { if (zFor === anchor) placeZoom(anchor); };
   }
   function initZoom() {
     if (!canHover) return;
