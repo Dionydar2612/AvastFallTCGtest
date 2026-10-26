@@ -1,172 +1,221 @@
-<!DOCTYPE html>
-<html lang="th"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>การ์ดทั้งหมด – Card Battle</title>
-<link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
-<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add("embed")</script>
-<style>.embed .sitetabs{display:none}.embed main{padding-top:16px}</style>
-<style>
-.sitetabs{display:inline-flex;border:3px solid var(--ink);border-radius:14px;overflow:hidden;background:var(--card);box-shadow:3px 3px 0 var(--ink);margin:0 0 16px}.sitetabs a{padding:6px 18px;font-weight:700;color:var(--ink);text-decoration:none;white-space:nowrap}.sitetabs a.on{background:var(--ink);color:var(--bg)}.sitetabs a+a{border-left:3px solid var(--ink)}
-:root{--bg:#fbfbf7;--ink:#111;--card:#fff;--line:#bfe3ea;--gold:#ffc20e;--mut:#666;--pap:#fff8ec;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--ink:#f2f2f2;--card:#22252a;--line:#2a3a40;--mut:#aaa;--pap:#2d2a22}}
-:root[data-theme="dark"]{--bg:#15171a;--ink:#f2f2f2;--card:#22252a;--line:#2a3a40;--mut:#aaa;--pap:#2d2a22}
-*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;font-family:'Mali','Noto Sans Thai',Tahoma,sans-serif;color:var(--ink);background:var(--bg) repeating-linear-gradient(transparent 0 31px,var(--line) 31px 32px);min-height:100vh}
-main{max-width:1200px;margin:0 auto;padding:20px 16px 60px}
-h1{font-size:2rem;margin:0 0 12px}
-.box{border:3px solid var(--ink);border-radius:14px;background:var(--card);box-shadow:4px 4px 0 var(--ink)}
-input,select{font:inherit;color:var(--ink);background:var(--card);border:3px solid var(--ink);border-radius:12px;padding:10px 14px;width:100%}
-.search{box-shadow:4px 4px 0 var(--ink);margin-bottom:12px}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
-.chip{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:99px;padding:4px 14px;cursor:pointer}
-.chip.on{background:var(--ink);color:var(--bg)}
-.filters{padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
-.filters label{font-weight:700;display:block;margin-bottom:4px}
-.filters input[type=range]{padding:0;border:0;accent-color:var(--ink)}
-.cnt{text-align:center;color:var(--mut);margin:10px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.grid button{border:0;background:none;padding:0;cursor:pointer;border-radius:10px;transition:transform .12s}
-.grid button:hover{transform:translateY(-4px)}
-.grid img,.big img{width:100%;display:block;border-radius:10px;border:2px solid var(--ink)}
-.empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:40px}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));z-index:9}
-#modal.open{display:flex}
-.dlg{background:var(--card);border-radius:18px;max-width:980px;width:100%;max-height:100%;overflow:auto;padding:24px;display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:24px;position:relative}
-.x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:var(--card);color:var(--ink);font-size:20px;cursor:pointer}
-.nav{position:fixed;top:50%;width:46px;height:46px;border-radius:50%;border:2px solid var(--ink);background:#fff;color:#111;font-size:22px;cursor:pointer;box-shadow:2px 2px 0 #111;transform:translateY(-50%)}
-#prev{left:8px}#next{right:8px}
-.dlg h2{margin:0 44px 4px 0;font-size:1.7rem}
-.code{color:var(--mut);margin-bottom:10px}
-.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.tag{border-radius:99px;padding:3px 14px;font-weight:700;color:#fff;background:#444;font-size:.9rem}
-.tag.t-Avatar{background:#c0121f}.tag.t-Unit{background:#1b4aa8}.tag.t-Spell{background:#6a2fb0}.tag.t-Ultimate{background:#b8860b}
-.tag.gold{background:var(--gold);color:#111}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));border:3px solid var(--ink);border-radius:14px;text-align:center;margin-bottom:14px;overflow:hidden}
-.stats div{padding:8px 4px;border-right:1px solid var(--mut)}.stats div:last-child{border:0}
-.stats small{display:block;color:var(--mut)}.stats b{font-size:1.6rem}
-h3{color:var(--mut);margin:10px 0 6px}
-.eff{border:3px solid var(--ink);border-radius:14px;padding:12px 16px;background:var(--pap);line-height:1.8}
-.eff p{margin:0 0 8px}
-.kw{display:inline-block;font-weight:700;font-size:.8rem;padding:1px 10px;border-radius:6px;color:#fff;margin-right:6px;background:#1b6fd8}
-.kw.AUTO{background:#2a9d2a}.kw.ACTIVATE{background:#1b6fd8}.kw.COST{background:#222}
-.fl{font-style:italic;color:var(--mut);margin-top:12px}
-@media(max-width:720px){.dlg{grid-template-columns:1fr;padding:16px}.big{max-width:300px;margin:0 auto}h1{font-size:1.5rem}}
+/* AvastFall TCG – สคริปต์เอฟเฟกต์การ์ดชุด SD06
+   หนึ่งการ์ด = FX[id] หนึ่งรายการ + (ถ้าจำเป็น) NOTES[id] อธิบายการตีความ
+   ถ้าแก้ข้อความการ์ดใน card-api ให้แก้สคริปต์ตรงนี้ แล้วอัปเดตข้อความใน js/data/snapshot.js ให้ตรงกัน */
+(function (AF) {
+'use strict';
+const H = AF.H, FX = AF.FX = AF.FX || {}, NOTES = AF.notes = AF.notes || {};
+const log = AF.log, place = AF.place;
 
-[hidden]{display:none!important}
-.db-sub{margin:-4px 0 14px;color:var(--mut)}
-.db-wrap{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
-.db-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:8px;align-items:center}
-.db-filters select{padding:6px 10px;border-width:2px}.db-chk{display:flex;gap:6px;align-items:center;font-weight:700}.db-chk input{width:auto}
-.db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
-.db-t{display:flex;flex-direction:column;gap:3px;padding:6px;border:2px solid transparent;border-radius:12px}.db-t.in{border-color:var(--ink);background:var(--card)}.db-t.off{opacity:.45}
-.db-img{position:relative;display:block;border:0;background:none;padding:0;cursor:pointer;border-radius:10px;width:100%}
-.db-img img,.db-av img,.db-avc img{width:100%;display:block;border-radius:8px;border:2px solid var(--ink)}
-.db-pill{position:absolute;top:4px;right:4px;min-width:24px;height:24px;border-radius:99px;background:var(--gold);color:#111;border:2px solid #111;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.85rem}
-.db-nm{font-weight:700;font-size:.82rem;line-height:1.2}.db-mt{font-size:.72rem;color:var(--mut)}
-.db-step{display:flex;gap:6px;align-items:center;justify-content:center}
-.db-step button,.db-elc button{width:28px;height:28px;border-radius:50%;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;line-height:1;padding:0}
-.db-step button:disabled{opacity:.35;cursor:not-allowed}
-.db-side{padding:14px;position:sticky;top:8px;max-height:calc(100vh - 16px);overflow:auto;display:flex;flex-direction:column;gap:10px}
-.db-side>*{flex:none}.db-saved{display:flex;gap:6px}.db-saved select{padding:6px 10px;border-width:2px}
-.db-lbl{font-weight:700;display:block}.db-lbl input{padding:6px 10px;border-width:2px;margin-top:2px}
-.db-head{display:flex;gap:12px;align-items:flex-start}
-.db-av{position:relative;width:96px;flex:none;border:0;background:none;padding:0;cursor:pointer;color:var(--ink);font:inherit}.db-av span{display:block;font-size:.72rem;font-weight:700;margin-top:2px;background:var(--ink);color:var(--bg);border-radius:6px}
-.db-info{flex:1;min-width:0}.db-tot{font-size:1.1rem}.good{color:#1a8a3a;font-weight:700}.bad{color:#c0121f;font-weight:700}
-.db-bar{height:8px;border:2px solid var(--ink);border-radius:99px;overflow:hidden;margin-top:4px}.db-bar i{display:block;height:100%;background:#d9a400}.db-bar i.ok{background:#2a9d2a}.db-bar i.over{background:#c0121f}
-.db-tabs{display:flex;gap:4px}.db-tab{flex:1;font:inherit;font-weight:700;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:10px;padding:4px 2px;cursor:pointer}.db-tab.on{background:var(--ink);color:var(--bg)}.db-tab b{margin-left:4px;font-size:.8rem}
-.db-elh{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
-.db-elg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:4px}.db-elc{display:flex;gap:4px;align-items:center}.db-elc span{flex:1}
-.db-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;min-height:60px}.db-m .db-step{margin-top:3px}.db-m .db-step button{width:24px;height:24px}
-.db-muted{color:var(--mut);font-size:.9rem}
-.db-warn{border:2px solid #c0121f;background:rgba(192,18,31,.1);border-radius:10px;padding:8px 10px;font-size:.85rem}
-.db-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}a.chip{text-decoration:none;display:inline-block}.chip.pri{background:var(--gold);color:#111;font-weight:700}
-.db-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:12px;z-index:20}
-.db-dlg{background:var(--card);padding:20px;max-width:620px;width:100%;max-height:100%;overflow:auto}.db-dlg h2{margin:0 0 8px}
-.db-ta{width:100%;min-height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;border:3px solid var(--ink);border-radius:12px;padding:10px;background:var(--bg);color:var(--ink);margin:8px 0}
-.db-avg{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.db-avc{font:inherit;color:var(--ink);background:none;border:2px solid transparent;border-radius:10px;padding:4px;cursor:pointer;text-align:center}.db-avc.on,.db-avc:hover{border-color:var(--ink)}.db-avc small{display:block;color:var(--mut)}
-.db-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:99px;opacity:0;pointer-events:none;transition:.2s;z-index:30}.db-toast.on{opacity:1;transform:translateX(-50%)}
-.db-topbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.db-topbar h1{margin:0}
-.db-lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:14px}
-.db-deck{display:flex;gap:12px;padding:12px;align-items:flex-start;background:var(--card);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
-.db-dart{width:84px;flex:none}.db-dart img{width:100%;display:block;border-radius:8px;border:2px solid var(--ink)}.db-dinfo{flex:1;min-width:0}.db-dinfo h3{margin:0 0 4px;color:var(--ink);overflow-wrap:anywhere}.db-ds{font-size:.85rem;margin-top:2px}
-.db-add{flex-direction:column;align-items:center;justify-content:center;min-height:150px;font:inherit;font-weight:700;font-size:1.1rem;color:var(--ink);border-style:dashed;cursor:pointer;gap:4px}.db-add span{font-size:2.4rem;line-height:1}.db-add:hover{background:var(--gold);color:#111}
-.chip.danger{background:#c0121f;color:#fff;border-color:#c0121f}
-@media(max-width:900px){.db-wrap{grid-template-columns:1fr}.db-side{position:static;max-height:none}}
-.noimg{aspect-ratio:170/241;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;border:2px solid var(--ink);border-radius:10px;background:var(--pap)}.meta{margin-top:14px;padding-top:10px;border-top:1px dashed var(--mut);font-size:.85rem;color:var(--mut)}</style></head><body><main>
-<nav class="sitetabs" aria-label="เมนูเว็บ"><a class="on" href="/cards/" data-v="cards" aria-current="page">Card List</a><a href="#deckbuilder" data-v="deck">Deckbuilder</a><a href="/" target="_blank" rel="noopener">Playtest ↗</a></nav>
-<div id="v-cards">
-<h1>การ์ดทั้งหมด</h1>
-<p style="margin:-4px 0 12px"><a href="/api/docs" target="_blank" rel="noopener" style="color:var(--ink)">📘 API สำหรับนักพัฒนา</a></p>
-<input id="q" class="search" placeholder="ค้นหาการ์ดด้วยชื่อ เลขการ์ด หรือข้อความในเอฟเฟกต์...">
-<div class="row"><span>เรียงตาม:</span><span id="sorts"></span></div>
-<div class="box filters"><div><label>เด็ค/ซีรีส์</label><select id="fd"><option value="">ทั้งหมด</option></select></div><div><label>Rotation</label><select id="fo"><option value="">ทั้งหมด</option></select></div><div><label>ประเภทการ์ด</label><select id="ft"><option value="">ทั้งหมด</option></select></div><div><label>ธาตุ</label><select id="fe"><option value="">ทั้งหมด</option></select></div><div><label>ความหายาก</label><select id="fr"><option value="">ทั้งหมด</option></select></div><div><label>Keyword</label><select id="fk"><option value="">ทั้งหมด</option></select></div>
-<div><label>Cost สูงสุด: <span id="cv">0</span></label><input id="fc" type="range" min="0" max="10" value="10"></div>
-</div>
-<div class="cnt" id="cnt"></div>
-<div class="grid" id="grid"></div>
-</div>
-<div id="v-deck" hidden></div>
-</main>
-<div id="modal"><button class="nav" id="prev">‹</button><div class="dlg box" id="dlg"></div><button class="nav" id="next">›</button></div>
-<script>
-const $=id=>document.getElementById(id);
-const FIL={fd:"deck",fo:"rot",ft:"type",fe:"el",fr:"rar"};
-const SORTS={no:"ซีรีส์",name:"ชื่อ",type:"ประเภท",cost:"Cost"};
-let ALL=[],list=[],cur=0,sort="no";
-const costOf=c=>c.cost??c.sc??0;
-const uniq=a=>[...new Set(a.filter(Boolean))];
-const ico=(n,s=18)=>{const e=ELEMENTS[n];return e?`<svg width="${s}" height="${s}" viewBox="0 0 18 18" style="vertical-align:-3px"><circle cx="9" cy="9" r="8" fill="#fff" stroke="${e.c}" stroke-width="2"/><path d="${e.p}" fill="${e.c}"/></svg>`:""};
-const pic=c=>c.img?`<img loading="lazy" src="${c.img}" alt="${c.name}">`:`<div class="noimg">${c.name}</div>`;
-function init(){
- ALL=CARDS.map((c,i)=>{const d=DECKS[c.deck]||{};const m={rot:d.rot,el:d.el,rar:d.rar,art:d.art,...c,i,fx:c.fx||[]};
-  m.code=`${m.deck} ${m.rot||"-"} ${m.no}/${d.total||"?"}`;m.img=(typeof IMAGES!=="undefined"&&IMAGES[c.key||c.deck+"-"+c.no])||c.img||"";return m});
- for(const[id,k]of Object.entries(FIL))uniq(ALL.map(c=>c[k])).forEach(v=>$(id).insertAdjacentHTML("beforeend",`<option>${v}</option>`));
- uniq(ALL.flatMap(c=>c.fx.map(e=>e[0].split(" ")[0]))).filter(k=>k!=="COST").forEach(k=>$("fk").insertAdjacentHTML("beforeend",`<option>${k}</option>`));
- const mx=Math.max(0,...ALL.map(costOf));$("fc").max=mx;$("fc").value=mx;
- $("sorts").innerHTML=Object.entries(SORTS).map(([k,v])=>`<button class="chip" data-s="${k}">${v}</button>`).join(" ");
- $("grid").onclick=e=>{const b=e.target.closest("button");if(b)show(+b.dataset.n)};
- $("sorts").onclick=e=>{if(e.target.dataset.s){sort=e.target.dataset.s;render()}};
- ["q","fk","fc",...Object.keys(FIL)].forEach(i=>$(i).addEventListener("input",render));
- $("prev").onclick=()=>show(cur-1);$("next").onclick=()=>show(cur+1);
- $("modal").onclick=e=>{if(e.target.id==="modal")closeM()};
- addEventListener("keydown",e=>{if(!$("modal").classList.contains("open"))return;if(e.key==="Escape")closeM();if(e.key==="ArrowLeft")show(cur-1);if(e.key==="ArrowRight")show(cur+1)});
- render();
-}
-function render(){
- const q=$("q").value.trim().toLowerCase(),k=$("fk").value,mx=+$("fc").value,v=id=>$(id).value;
- $("cv").textContent=mx;
- list=ALL.filter(c=>Object.entries(FIL).every(([id,f])=>!v(id)||c[f]===v(id))&&costOf(c)<=mx&&(!k||c.fx.some(e=>e[0].startsWith(k)))&&(!q||[c.no,c.name,c.code,c.tribe,...c.fx.map(e=>e[1])].join(" ").toLowerCase().includes(q)));
- list.sort({no:(a,b)=>a.i-b.i,name:(a,b)=>a.name.localeCompare(b.name,"th"),type:(a,b)=>a.type.localeCompare(b.type)||a.i-b.i,cost:(a,b)=>costOf(a)-costOf(b)||a.i-b.i}[sort]);
- document.querySelectorAll("#sorts .chip").forEach(b=>b.classList.toggle("on",b.dataset.s===sort));
- $("cnt").innerHTML=`แสดง <b>${list.length}</b> จาก <b>${ALL.length}</b> การ์ด`;
- $("grid").innerHTML=list.length?list.map((c,n)=>`<button data-n="${n}" aria-label="${c.name}">${pic(c)}</button>`).join(""):'<div class="empty">ไม่พบการ์ดที่ตรงกับเงื่อนไข</div>';
-}
-function show(n){
- cur=(n+list.length)%list.length;const c=list[cur],d=DECKS[c.deck]||{};
- const st=c.type==="Unit"?`<div><small>Cost</small><b>${c.cost}</b></div><div><small>CRI</small><b>${c.cri}</b></div><div><small>ATK</small><b>${c.atk}</b></div><div><small>DEF</small><b>${c.def ?? c.defense ?? "-"}</b></div>`:(c.sc!=null?`<div><small>ค่า Element</small><b>${c.sc}</b></div>`:"");
- const ef=c.fx.length?c.fx.map(e=>`<p>${e[0]?`<span class="kw ${e[0].split(" ")[0]}">${e[0]}</span>`:""}${e[1]}</p>`).join(""):'<p style="color:var(--mut)">ไม่มีเอฟเฟกต์</p>';
- $("dlg").innerHTML=`<button class="x" onclick="closeM()" aria-label="ปิด">✕</button><div class="big">${pic(c)}</div><div><h2>${c.name}</h2><div class="code">${c.deck}-${c.no}/${d.total||"?"}</div><div class="tags"><span class="tag t-${c.type}">${c.type}</span>${c.sub?`<span class="tag">${c.sub}</span>`:""}<span class="tag gold">${c.deck} ${d.name||""}</span>${(c.els&&c.els.length?c.els:c.el?[c.el]:[]).map(e=>`<span class="tag" style="background:#fff;color:#111;border:2px solid ${(ELEMENTS[e]||{}).c||"#888"}">${ico(e)} ธาตุ${e}</span>`).join("")}${c.rar?`<span class="tag" style="background:#555">Rarity ${c.rar}</span>`:""}${c.rot?`<span class="tag" style="background:#555">Rotation ${c.rot}</span>`:""}</div>${st?`<div class="stats">${st}</div>`:""}${c.tribe?`<h3>เผ่า</h3><div class="tags"><span class="tag" style="background:#555">${c.tribe}</span></div>`:""}<h3>ผลหลัก</h3><div class="eff">${ef}</div>${c.fl?`<div class="fl">${c.fl}</div>`:""}<div class="meta">${c.code}${c.art?` · นักวาด: @${c.art}`:""}${c.rar?` · ความหายาก: ${c.rar}`:""}</div></div>`;
- $("modal").classList.add("open");
-}
-function closeM(){$("modal").classList.remove("open")}
+/* =============================================================== SD06 */
+const BOOK = 'ตำราพิชัยสงคราม', WATER = 'น้ำ';
+const books = P => P.hand.filter(c => c.def.name.includes(BOOK));
 
-async function boot(){
- try{
-  const j=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u+" "+r.status);return r.json()});
-  const [cs,ds,es]=await Promise.all([j("/api/cards?limit=500"),j("/api/decks"),j("/api/elements")]);
-  window.ELEMENTS=es.data;
-  window.DECKS=Object.fromEntries(ds.data.map(d=>[d.id,{name:d.name,total:d.total,rot:d.rotation,el:d.element,rar:d.rarity,art:d.artist}]));
-  window.CARDS=cs.data.map(c=>({deck:c.deck,no:c.no,key:c.id,name:c.name,type:c.type,sub:c.sub,cost:c.cost,cri:c.cri,atk:c.atk,def:c.def,sc:c.sc,tribe:c.tribe,
-    fx:(c.effects||[]).map(e=>[e.keyword,e.text]),fl:c.flavor,el:c.element,els:c.elements,rar:c.rarity,rot:c.rotation,art:c.artist,img:c.image}));
-  init();window.DB&&DB.init();
- }catch(err){document.getElementById("cnt").textContent="โหลดข้อมูลจาก API ไม่สำเร็จ: "+err.message}
-}
-addEventListener("DOMContentLoaded",boot);
-/* ฝังอยู่ในหน้าเกม: แถบเมนูบนสุดของหน้าหลักเป็นตัวสลับ Card List ↔ Deckbuilder */
-addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
- if(e.data.afView)window.DB&&DB.show&&DB.show(e.data.afView==="deck"?"deck":"cards");
- if(e.data.afDeck){if(window.DB&&DB.ready&&DB.ready())DB.openDeck(e.data.afDeck);else window.__afDeckQ=e.data.afDeck}});
+/* ---- 001 ซุนวู นักยุทธศาสตร์ไร้รูปแบบ (Avatar) */
+FX['SD06-001'] = { abilities: [{
+  id: 'art', kw: 'ACTIVATE 1/turn', zone: 'avatar', label: '[Spend 2 Water] ทิ้ง “ตำราพิชัยสงคราม” 1 ใบ: นำ Unit ฝ่ายตรงข้าม 1 ใบไปไว้ใต้ Main Deck',
+  can: ({ G, p, self }) => AF.standElems(G.players[p], WATER).length >= 2 && books(G.players[p]).length > 0 && H.oppUnits(G, p, null, self).length > 0,
+  pay: async ({ G, p }) => {
+    AF.spendElems(G, p, 2, WATER);
+    const [c] = await H.pickCards(G, p, { title: 'ซุนวู: เลือกการ์ดที่มีคำว่า “ตำราพิชัยสงคราม” ในชื่อจากมือเพื่อทิ้ง', cards: books(G.players[p]) });
+    if (c) { place(G, c, 'discard'); log(G, `${G.players[p].name} ทิ้ง ${c.def.name}`, p); }
+  },
+  targets: async ({ G, p, self }) => (await H.pickUnit(G, p, H.oppUnits(G, p, null, self), 'ซุนวู: เลือก Unit ฝ่ายตรงข้าม 1 ใบ นำไปไว้ใต้ Main Deck ของฝ่ายตรงข้าม')) || false,
+  resolve: async ({ G, p }, u) => {
+    if (!u || u.zone !== 'field') return;
+    await H.removeUnit(G, u, 'deckBottom');
+    log(G, `${u.def.name} ถูกนำไปไว้ใต้ Main Deck ของ ${G.players[u.owner].name}`, p);
+  } }] };
+NOTES['SD06-001'] = 'ค่า Spend ต้องใช้ Element ธาตุน้ำ 2 ใบ ทิ้งการ์ดเป็นค่าใช้จ่ายก่อนเลือกเป้าหมาย (ตามรูปแบบเดียวกับ SD03-009) ถ้า Unit มี Equipment สวมอยู่ Equipment จะลงกองทิ้งตามปกติ';
+/* ---- 002 จางอิ่ง สายลับไร้เงา */
+FX['SD06-002'] = { advent: { resolve: async ({ G, p }) => {
+  const O = G.players[AF.opp(p)];
+  if (!O.hand.length) { log(G, 'ฝ่ายตรงข้ามไม่มีการ์ดบนมือ', p); return; }
+  const c = O.hand[Math.floor(G.rng() * O.hand.length)];
+  place(G, c, 'deckBottom'); log(G, `การ์ดบนมือของ ${O.name} 1 ใบถูกนำไปไว้ใต้ Main Deck`, p);
+  H.draw(G, AF.opp(p), 1);
+} } };
 
-</script>
-<script src="/cards/deckbuilder.js?v=8"></script>
-</body></html>
+/* ---- 003 เติ้งจือ ทูตม้าเร็ว */
+FX['SD06-003'] = { advent: { resolve: async ({ G, p }) => {
+  await H.digTop(G, p, { n: 2, title: 'เติ้งจือ: เลือกการ์ดที่มีคำว่า “ตำราพิชัยสงคราม” ในชื่อ 1 ใบขึ้นมือ', filter: c => c.def.name.includes(BOOK) });
+} } };
+
+/* ---- 005 เฉินเต้า ทหารล่อศึก */
+FX['SD06-005'] = { admonish: async ({ G, p }) => {
+  const c = H.oppUnits(G, p, u => u.state === 'rest');
+  const u = await H.pickUnit(G, p, c, 'เฉินเต้า: เลือก Unit ฝ่ายตรงข้ามที่นอนอยู่ 1 ใบ นำไปไว้ใต้ Main Deck');
+  if (u) { await H.removeUnit(G, u, 'deckBottom'); log(G, `${u.def.name} ถูกนำไปไว้ใต้ Main Deck`, p); }
+} };
+
+/* ---- 018 กระโจมบัญชาการลับ (Domain) */
+FX['SD06-018'] = { abilities: [{
+  id: 'tent', kw: 'ACTIVATE 1/turn', zone: 'domain', label: 'ทิ้ง “ตำราพิชัยสงคราม” 1 ใบจากมือ แล้วจั่ว 2',
+  can: ({ G, p }) => books(G.players[p]).length > 0,
+  pay: async ({ G, p }) => {
+    const [c] = await H.pickCards(G, p, { title: 'กระโจมบัญชาการลับ: เลือก “ตำราพิชัยสงคราม” จากมือเพื่อทิ้ง', cards: books(G.players[p]) });
+    if (c) { place(G, c, 'discard'); log(G, `${G.players[p].name} ทิ้ง ${c.def.name}`, p); }
+  },
+  resolve: async ({ G, p }) => { H.draw(G, p, 2); } }] };
+NOTES['SD06-018'] = 'ค่าใช้จ่ายคือการทิ้งการ์ด (ทิ้งก่อนแล้วจึงจั่ว 2 ใบ)';
+const opp = AF.opp, stat = AF.stat, addMod = AF.addMod;
+const isBook = c => c.def.name.includes(BOOK);
+const toBottom = async (G, u, p, why) => { await H.removeUnit(G, u, 'deckBottom'); log(G, `${u.def.name} ถูกนำไปไว้ใต้ Main Deck ${why || ''}`.trim(), p); };
+
+/* ---- 004 จูกัดเหลียง ผู้พลิกกระดานศึก: Unit ฝ่ายตรงข้ามถูกส่งกลับ Main Deck จาก Action Zone → จั่ว 1 */
+FX['SD06-004'] = { deckReturn: (G, self, c, z0) => {
+  if (z0 === 'field' && c.def.kind === 'Unit' && c.owner !== self.owner) { H.draw(G, self.owner, 1); log(G, `${self.def.name}: Unit ของฝ่ายตรงข้ามถูกส่งกลับ Main Deck จึงจั่วการ์ด`, self.owner); }
+} };
+
+/* ---- 006 โจวยี่ แม่ทัพพัดเพลิง: ตกเป็นเป้าหมายการโจมตี → ทิ้ง 1 ใบ แล้วส่ง Unit ที่โจมตีไปใต้ Main Deck (1/turn) */
+FX['SD06-006'] = { on: { attackDeclared: async ({ G, self, p, item, target }) => {
+  if (target !== self || self.flags.zhouTurn === G.turn) return;
+  const a = item.attacker, P = G.players[p];
+  if (!P.hand.length || !a || a.zone !== 'field') return;
+  if (!(await H.yesNo(G, p, `โจวยี่: ทิ้งการ์ดบนมือ 1 ใบ เพื่อนำ ${a.def.name} ไปไว้ใต้ Main Deck ของเจ้าของ?`))) return;
+  self.flags.zhouTurn = G.turn;
+  const d = await H.discardFromHand(G, p, 1, 'โจวยี่: เลือกการ์ดบนมือที่จะทิ้ง');
+  if (d.length && a.zone === 'field') await toBottom(G, a, p, 'ของเจ้าของ');
+} } };
+
+/* ---- 007 บังทอง: ร่ายการ์ดที่ชื่อมี “ตำราพิชัยสงคราม” → จั่ว 1 (1/turn) */
+FX['SD06-007'] = { on: { spellCast: async ({ G, self, p, card, player }) => {
+  if (player !== p || !isBook(card) || self.flags.pangTurn === G.turn) return;
+  self.flags.pangTurn = G.turn; H.draw(G, p, 1); log(G, `${self.def.name}: ร่าย ${card.def.name} จึงจั่วการ์ด`, p);
+} } };
+
+/* ---- 008 หานชิน แม่ทัพพิชิตศึก: ทำลาย Unit สำเร็จ → Spend 1 ส่ง Unit ที่ Cost น้อยกว่าไปใต้ Main Deck (1/turn) */
+FX['SD06-008'] = { on: { attackSuccess: async ({ G, self, p, attacker, target, destroyed }) => {
+  if (attacker !== self || !destroyed || target === 'avatar' || self.flags.hanTurn === G.turn) return;
+  if (AF.standElems(G.players[p]).length < 1) return;
+  const c = H.oppUnits(G, p, u => u.def.cost < target.def.cost, self);
+  if (!c.length) return;
+  if (!(await H.yesNo(G, p, 'หานชิน: Spend 1 Element เพื่อนำ Unit ฝ่ายตรงข้ามที่ Cost น้อยกว่าไปไว้ใต้ Main Deck?'))) return;
+  self.flags.hanTurn = G.turn; await AF.payElems(G, p, 1, null, 'หานชิน');
+  const u = await H.pickUnit(G, p, c, `หานชิน: เลือก Unit ฝ่ายตรงข้ามที่ Cost น้อยกว่า ${target.def.name} (${target.def.cost})`);
+  if (u) await toBottom(G, u, p, 'ของฝ่ายตรงข้าม');
+} } };
+
+/* ---- 009 เว่ยเหลียว ปราชญ์แห่งตำราศึก: CRI +1 ต่อทุก 3 ใบที่เป็นตำราในกองทิ้ง */
+FX['SD06-009'] = { aura: { cri: (G, self, u) => u === self ? Math.floor(G.players[self.owner].discard.filter(isBook).length / 3) : 0 } };
+
+/* ---- 010 ปิดฟ้าข้ามทะเล: ค้าง 3 เทิร์นของฝ่ายตรงข้าม Unit ทุกใบใช้ความสามารถไม่ได้ */
+FX['SD06-010'] = { silenceUnits: true,
+  spell: { resolve: async ({ G, p, self }) => { self.linger = { expire: Infinity, oppTurns: 3 }; log(G, `${self.def.name} ค้างอยู่ใน Magic Area 3 เทิร์นของฝ่ายตรงข้าม — Unit ทุกใบใช้ความสามารถไม่ได้`, p); } },
+  on: { turnEnd: async ({ G, self, p, player }) => {
+    if (player === p || self.zone !== 'magic' || !self.linger || self.linger.oppTurns == null) return;
+    self.linger.oppTurns--;
+    if (self.linger.oppTurns > 0) { log(G, `${self.def.name}: เหลืออีก ${self.linger.oppTurns} เทิร์นของฝ่ายตรงข้าม`, p); return; }
+    place(G, self, 'discard'); log(G, `${self.def.name} สิ้นสุดผล (ครบ 3 เทิร์นของฝ่ายตรงข้าม) และลงกองทิ้ง`, p);
+  } } };
+
+/* ---- 011 ล้อมเว่ยช่วยจ้าว */
+const siegeMods = (G, u) => { addMod(G, u, { flag: 'haste', until: 'turnEnd' }); addMod(G, u, { flag: 'direct', until: 'turnEnd' }); };
+FX['SD06-011'] = {
+  spell: {
+    can: ({ G, p }) => G.players[opp(p)].field.filter(Boolean).length === 4 && G.players[p].field.filter(Boolean).length < 4,
+    cantReason: 'ต้องที่ฝ่ายตรงข้ามมี Unit 4 ใบ และคุณมี Unit น้อยกว่า',
+    resolve: async ({ G, p, self }) => {
+      self.linger = { expire: G.turn }; self.siegeDone = false;
+      for (const u of H.myUnits(G, p)) siegeMods(G, u);
+      log(G, `${self.def.name}: Unit ฝ่ายเราทุกใบโจมตีได้ทันทีและโจมตี Avatar ตรงได้จนจบเทิร์น`, p);
+    } },
+  on: {
+    unitEntered: async ({ G, self, p, unit }) => { if (unit.owner === p && unit.zone === 'field') siegeMods(G, unit); },
+    attackSuccess: async ({ G, self, p, attacker, target }) => {
+      if (self.siegeDone || target !== 'avatar' || attacker.owner !== p) return;
+      self.siegeDone = true;
+      const u = await H.pickUnit(G, p, H.oppUnits(G, p, null, self), 'ล้อมเว่ยช่วยจ้าว: เลือก Unit ฝ่ายตรงข้าม 1 ใบ เปลี่ยนเป็นสภาพนอน');
+      if (u) { u.state = 'rest'; log(G, `${u.def.name} เปลี่ยนเป็นสภาพนอน`, p); }
+    } } };
+NOTES['SD06-011'] = 'ร่ายได้เมื่อฝ่ายตรงข้ามมี Unit พอดี 4 ใบและเรามี Unit น้อยกว่า การ์ดค้างใน Magic Area จนจบเทิร์นเพื่อให้ Unit ที่ลงสนามหลังร่ายได้ผลด้วย Unit ที่นอนอยู่ยังโจมตีไม่ได้ตามปกติ';
+
+/* ---- 012 ยืมดาบฆ่าคน */
+FX['SD06-012'] = { spell: {
+  can: ({ G, p }) => G.players[opp(p)].field.filter(Boolean).length >= 2, cantReason: 'ฝ่ายตรงข้ามต้องมี Unit อย่างน้อย 2 ใบ',
+  resolve: async ({ G, p, self }) => {
+    const all = H.oppUnits(G, p, null, self);
+    const w = await H.pickUnit(G, p, all, 'ยืมดาบฆ่าคน: เลือก “ผู้ถือดาบ” (Unit ฝ่ายตรงข้าม)');
+    if (!w) return;
+    const v = await H.pickUnit(G, p, all.filter(u => u !== w), 'ยืมดาบฆ่าคน: เลือก “เหยื่อ” (Unit ฝ่ายตรงข้ามอีกใบ)');
+    if (!v) return;
+    const atk = stat(G, w, 'atk'), def = stat(G, v, 'def');
+    log(G, `${w.def.name} (ATK ${atk}) โจมตี ${v.def.name} (DEF ${def})`, p);
+    if (atk >= def) await H.destroy(G, v, { kind: 'battle', attacker: w, player: p });
+    if (w.zone === 'field') { w.state = 'rest'; log(G, `${w.def.name} เปลี่ยนเป็นสภาพนอน`, p); }
+  } } };
+
+/* ---- 013 รอซ้ำยามเปลี้ย */
+FX['SD06-013'] = { spell: { resolve: async ({ G, p, self }) => {
+  const c = H.oppUnits(G, p, u => u.state === 'rest', self);
+  const picks = await H.pickCards(G, p, { title: 'รอซ้ำยามเปลี้ย: เลือก Unit ฝ่ายตรงข้ามที่นอนอยู่ (ไม่เกิน 2 ใบ) เพื่อทำลาย', cards: c, min: 0, max: 2, optional: true, kind: 'units' });
+  for (const u of picks) if (u.zone === 'field') await H.destroy(G, u, { kind: 'effect', player: p, source: self });
+  G.players[p].noAttackTurn = G.turn; log(G, 'Unit ฝ่ายเราประกาศโจมตีไม่ได้จนจบเทิร์นนี้', p);
+} } };
+
+/* ---- 014 ตีชิงตามไฟ */
+FX['SD06-014'] = {
+  freeIf: (G, p) => (G.tf && G.tf.left ? G.tf.left[opp(p)] : 0) >= 2,
+  spell: { resolve: async ({ G, p }) => {
+    const P = G.players[p], O = G.players[opp(p)];
+    const i = await H.choose(G, p, 'ตีชิงตามไฟ: เลือก 1 อย่าง', ['จั่วการ์ด 1 ใบ', `รับ Element 1 ใบ (${P.elems.length}/8)`, `สุ่มทิ้งการ์ดบนมือฝ่ายตรงข้าม 1 ใบ (${O.hand.length} ใบ)`]);
+    if (i === 0) H.draw(G, p, 1);
+    else if (i === 1) { if (P.elems.length >= 8) log(G, 'มี Element ครบ 8 ใบแล้ว ไม่ได้รับเพิ่ม', p); else if (AF.tools.element(G, p)) log(G, `${P.name} ได้รับ Element +1 (มี ${P.elems.length} ใบ)`, p); else log(G, 'Element Deck หมดแล้ว', p); }
+    else if (O.hand.length) { const c = O.hand[Math.floor(G.rng() * O.hand.length)]; place(G, c, 'discard'); log(G, `สุ่มทิ้ง ${c.def.name} จากมือของ ${O.name}`, p); }
+  } } };
+NOTES['SD06-014'] = 'ร่ายตามปกติด้วย SpellCost 3 หากในเทิร์นนี้ Unit ฝ่ายตรงข้ามออกจาก Action Zone ตั้งแต่ 2 ใบ (ไม่ว่าด้วยเหตุใด) ค่าร่ายเป็น 0 ระบบนับการออกจากสนามตั้งแต่ต้นเทิร์น';
+
+/* ---- 015 กลเมืองร้าง (Counter) */
+FX['SD06-015'] = { counter: {
+  when: (G, r, last) => last.kind === 'attack' && last.controller !== r,
+  resolve: async ({ G, p, target }) => {
+    H.cancel(G, target);
+    const a = target.attacker; log(G, 'การโจมตีถูกยกเลิก', p);
+    if (!G.players[p].hand.length || !a || a.zone !== 'field') return;
+    if (!(await H.yesNo(G, p, `กลเมืองร้าง: ทิ้งการ์ดบนมือ 1 ใบ เพื่อนำ ${a.def.name} ไปไว้ใต้ Main Deck ของเจ้าของ?`))) return;
+    const d = await H.discardFromHand(G, p, 1, 'กลเมืองร้าง: เลือกการ์ดบนมือที่จะทิ้ง');
+    if (d.length && a.zone === 'field') await toBottom(G, a, p, 'ของเจ้าของ');
+  } } };
+
+/* ---- 016 ซ่อนดาบในรอยยิ้ม (Counter) */
+FX['SD06-016'] = { counter: {
+  when: (G, r, last) => last.controller !== r && last.kind === 'spell' && last.source.def.type === 'Spell',
+  resolve: async ({ G, p, target }) => {
+    H.cancel(G, target);
+    const c = target.source;
+    target.after = async () => { if (c.zone === 'magic' || c.zone === 'limbo') { place(G, c, 'deckBottom'); log(G, `${c.def.name} ถูกนำไปไว้ใต้ Main Deck ของเจ้าของแทนการลงกองทิ้ง`, p); } };
+  } } };
+
+/* ---- 017 พัดยุทธศาสตร์โบราณ: ทุกครั้งที่การ์ดฝ่ายตรงข้ามถูกส่งกลับ Main Deck ผู้สวมใส่ ATK/DEF +1 (สะสม ตราบที่ยังสวมใส่) */
+const fanBonus = (G, self, u) => {
+  if (!self.host || u !== self.host) return 0;
+  if (self.fanHost !== self.host) { self.fanHost = self.host; self.fanCount = 0; }
+  return self.fanCount || 0;
+};
+FX['SD06-017'] = {
+  equip: {},
+  aura: { atk: (G, self, u) => fanBonus(G, self, u), def: (G, self, u) => fanBonus(G, self, u) },
+  deckReturn: (G, self, c, z0) => {
+    if (self.zone !== 'equip' || !self.host || c.owner === self.owner) return;
+    fanBonus(G, self, self.host); self.fanCount++;
+    log(G, `${self.def.name}: ${self.host.def.name} ได้รับ ATK/DEF +1 (รวม +${self.fanCount})`, self.owner);
+  } };
+NOTES['SD06-017'] = 'โบนัสสะสมทุกครั้งที่การ์ดฝ่ายตรงข้ามถูกส่งกลับ Main Deck จากโซนใดก็ตาม (ไม่นับการเรียงใหม่ภายใน Main Deck) โบนัสหายเมื่อพัดออกจากผู้สวม';
+
+/* ---- 019 พิชิตศัตรูโดยไม่ต้องรบ (Ultimate → Domain Zone) */
+const finishSun = ({ G, p, self }) => {
+  log(G, `${self.def.name}: ไม่มีการ์ดใต้ใบนี้แล้ว ลงกองทิ้งและสร้างความเสียหาย 4 หน่วยแก่ฝ่ายตรงข้าม`, p);
+  place(G, self, 'discard'); H.damageAvatar(G, opp(p), 4);
+};
+FX['SD06-019'] = {
+  bookCost: { onEmpty: finishSun },
+  ultimate: {
+    can: ({ G, p }) => G.players[p].domains.length < AF.DOMAIN_LIMIT,
+    resolve: async ({ G, p, self }) => {
+      const P = G.players[p];
+      place(G, self, 'domain'); self.under = [];
+      for (const b of P.discard.filter(isBook)) { place(G, b, 'limbo'); P.limbo.splice(P.limbo.indexOf(b), 1); b.zone = 'under'; self.under.push(b); }
+      log(G, `${self.def.name} ถูกวางใน Domain Zone พร้อมตำรา ${self.under.length} ใบใต้การ์ด`, p);
+      if (!self.under.length) finishSun({ G, p, self });
+    } } };
+NOTES['SD06-019'] = 'การใช้ตำราใต้การ์ดแทน 1 Element ระบบใช้ให้อัตโนมัติทุกครั้งที่ร่าย Spell หรืออัญเชิญ Unit ที่มีค่าร่ายอย่างน้อย 1 (ไม่ถามก่อน) เมื่อตำราใต้การ์ดหมด การ์ดลงกองทิ้งและสร้างความเสียหาย 4 หน่วย ใช้ไม่ได้ถ้า Domain Zone เต็ม';
+})(globalThis.AF = globalThis.AF || {});
