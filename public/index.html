@@ -91,8 +91,10 @@ h3{color:var(--mut);margin:10px 0 6px}
 .db-dart{width:84px;flex:none}.db-dart img{width:100%;display:block;border-radius:8px;border:2px solid var(--ink)}.db-dinfo{flex:1;min-width:0}.db-dinfo h3{margin:0 0 4px;color:var(--ink);overflow-wrap:anywhere}.db-ds{font-size:.85rem;margin-top:2px}
 .db-add{flex-direction:column;align-items:center;justify-content:center;min-height:150px;font:inherit;font-weight:700;font-size:1.1rem;color:var(--ink);border-style:dashed;cursor:pointer;gap:4px}.db-add span{font-size:2.4rem;line-height:1}.db-add:hover{background:var(--gold);color:#111}
 .chip.danger{background:#c0121f;color:#fff;border-color:#c0121f}
-#dzoom{position:fixed;z-index:40;pointer-events:none;opacity:0;transform:scale(.96);transition:opacity .12s,transform .12s;border-radius:16px;border:3px solid var(--ink);background:var(--card);box-shadow:8px 8px 0 rgba(0,0,0,.35);overflow:hidden}
-#dzoom.on{opacity:1;transform:none}#dzoom img{width:100%;height:100%;display:block;object-fit:contain}
+#dzoom{position:fixed;z-index:40;pointer-events:none;opacity:0;transform:scale(.96);transition:opacity .12s,transform .12s;border-radius:16px;border:3px solid var(--ink);background:var(--card);color:var(--ink);box-shadow:8px 8px 0 rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column}
+#dzoom.on{opacity:1;transform:none}#dzoom .zi{background:#000;display:flex;justify-content:center}#dzoom img{display:block;max-width:100%;width:auto;height:auto}
+#dzoom .zt{padding:10px 14px 12px;font-size:15px;line-height:1.5}#dzoom h3{margin:0 0 4px;font-size:1.1rem}#dzoom p{margin:6px 0 0}#dzoom .zn{color:var(--mut)}
+#dzoom .zm{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:.8rem;color:var(--mut);margin-bottom:4px}
 @media(prefers-reduced-motion:reduce){#dzoom{transition:none}}
 .db-img[data-z],.db-m[data-z]{cursor:zoom-in}
 @media(max-width:900px){.db-wrap{grid-template-columns:1fr}.db-side{position:static;max-height:none}}
@@ -172,5 +174,5 @@ addEventListener("message",e=>{if(e.origin!==location.origin||!e.data)return;
  if(e.data.afDeck){if(window.DB&&DB.ready&&DB.ready())DB.openDeck(e.data.afDeck);else window.__afDeckQ=e.data.afDeck}});
 
 </script>
-<script src="/cards/deckbuilder.js?v=4"></script>
+<script src="/cards/deckbuilder.js?v=5"></script>
 </body></html>
