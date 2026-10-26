@@ -136,6 +136,7 @@
         <div class="db-grid" id="dgrid"></div>
       </section>
       <aside class="db-side box" id="dside">
+        <button class="chip db-sheet-x" data-a="sheet">✕ ปิดแผงเด็ค (กลับไปเลือกการ์ด)</button>
         <label class="db-lbl">ชื่อเด็ค<input id="dname" type="text" maxlength="40"></label>
         <div class="db-head" id="dhead"></div>
         <div class="db-tabs" id="dtabs" role="tablist"></div>
@@ -144,6 +145,7 @@
         <div class="db-bot" id="dbot"></div>
       </aside>
     </div>
+    <div id="dbar" class="db-bar-m"></div>
     </div>
     <div id="dov" class="db-ov" hidden></div><div id="dbt" class="db-toast" role="status"></div>`;
     $('dfil').innerHTML = '';
@@ -177,7 +179,7 @@
     $('dgrid').innerHTML = lib.map(d => {
       const n = S.counts[d.id] || 0, bad = av && !allowed(av, d), full = (nc[d.name] || 0) >= 4 || bad;
       return `<div class="db-t ${n ? 'in' : ''} ${bad ? 'off' : ''}" ${bad ? `title="ธาตุ${esc(d.els.join('/'))} ใส่ไม่ได้ Avatar เป็นธาตุ${esc(av.els.join('/') || 'ไม่ระบุ')}"` : ''}>
-        <button class="db-img" data-z="${esc(d.id)}" data-a="add" data-id="${esc(d.id)}" aria-label="เพิ่ม ${esc(d.name)}" ${full ? 'data-full="1"' : ''}>${pic(d)}${n ? `<span class="db-pill">${n}</span>` : ''}</button>
+        <button class="db-img" data-z="${esc(d.id)}" data-a="add" data-id="${esc(d.id)}" aria-label="เพิ่ม ${esc(d.name)}" ${full ? 'data-full="1"' : ''}>${pic(d)}${n ? `<span class="db-pill">${n}</span>` : ''}</button><button class="db-i" data-a="zoom" data-id="${esc(d.id)}" aria-label="ดูรายละเอียด ${esc(d.name)}">i</button>
         <div class="db-nm">${esc(d.name)}</div><div class="db-mt">${d.els.map(e => ico(e, 12)).join('')} ${esc(d.id)} ${esc(costTxt(d))}</div>
         <div class="db-step"><button data-a="sub" data-id="${esc(d.id)}" ${n ? '' : 'disabled'} aria-label="ลด">−</button><b>${n}</b><button data-a="add" data-id="${esc(d.id)}" ${full ? 'disabled' : ''} aria-label="เพิ่ม">+</button></div></div>`;
     }).join('') || '<div class="empty">ไม่พบการ์ดตามตัวกรอง</div>';
@@ -198,11 +200,15 @@
     $('del').innerHTML = `<div class="db-elh"><span>Element Deck <b>${edTot}</b>/8 ${edTot === 8 ? '<span class="good">✓</span>' : ''}</span><button class="chip" data-a="edauto">ตามธาตุ Avatar</button></div>
       <div class="db-elg">${ELS.map(k => `<div class="db-elc">${ico(k, 16)}<span>${esc(k)}</span><button data-a="edm" data-k="${esc(k)}" data-d="-1" aria-label="ลด ${esc(k)}">−</button><b>${ed[k] || 0}</b><button data-a="edm" data-k="${esc(k)}" data-d="1" aria-label="เพิ่ม ${esc(k)}">+</button></div>`).join('')}</div>`;
     const mine = Object.keys(S.counts).filter(id => S.counts[id] > 0 && DEFS[id]).map(id => DEFS[id]).sort((x, y) => (KORD[x.kind] - KORD[y.kind]) || x.cost - y.cost || cmpId(x, y));
-    $('dmini').innerHTML = mine.map(d => `<div class="db-m" data-z="${esc(d.id)}"><div class="db-img">${pic(d)}<span class="db-pill">${S.counts[d.id]}</span></div>
+    $('dmini').innerHTML = mine.map(d => `<div class="db-m" data-z="${esc(d.id)}"><div class="db-img" data-a="zoomt" data-id="${esc(d.id)}">${pic(d)}<span class="db-pill">${S.counts[d.id]}</span></div>
       <div class="db-step"><button data-a="sub" data-id="${esc(d.id)}" aria-label="ลด">−</button><button data-a="add" data-id="${esc(d.id)}" ${(nc[d.name] || 0) >= 4 ? 'disabled' : ''} aria-label="เพิ่ม">+</button></div></div>`).join('')
       || '<span class="db-muted">ยังไม่มีการ์ดในเด็ค คลิกการ์ดทางซ้ายเพื่อใส่ลงเด็ค</span>';
     $('dbot').innerHTML = (errs.length ? `<div class="db-warn">${errs.map(esc).join('<br>')}</div>` : '<div class="good">✓ เด็คถูกต้อง พร้อมใช้เล่น กดบันทึกแล้วไปเลือกที่แท็บ Playtest</div>') +
       `<div class="db-acts"><button class="chip pri" data-a="share">📤 แชร์ / คัดลอกข้อความ</button><button class="chip" data-a="save">💾 บันทึกเด็ค</button><button class="chip" data-a="import">📥 นำเข้าจากข้อความ</button><button class="chip" data-a="clear">ล้างเด็ค</button></div>`;
+    $('dbar').innerHTML = `<button class="db-bav" data-a="avopen" aria-label="เปลี่ยน Avatar">${av ? pic(av) : '<span>Avatar</span>'}</button>
+      <div class="db-bin"><b>${av ? esc(av.name) : 'ยังไม่ได้เลือก Avatar'}</b><span><b>${tot}</b>/60 ${tot === 60 ? '<span class="good">ครบ</span>' : `<span class="bad">${tot < 60 ? 'ขาด ' + (60 - tot) : 'เกิน ' + (tot - 60)}</span>`}</span></div>
+      <button class="chip pri" data-a="avopen">เปลี่ยน Avatar</button><button class="chip" data-a="sheet">ดูเด็ค ▲</button>`;
+    $('dside').classList.toggle('open', !!S.sheet);
     renderPool();
   }
 
@@ -239,7 +245,7 @@
     S.counts = {}; for (const [id, n] of Object.entries(d.counts || {})) if (DEFS[id] && n > 0) S.counts[id] = Math.min(4, n);
     S.edeck = d.edeck && Object.values(d.edeck).some(n => n > 0) ? Object.assign({}, d.edeck) : null;
     base = d.fresh ? '' : snap();
-    S.q = ''; if ($('dq')) $('dq').value = '';
+    S.q = ''; S.sheet = false; if ($('dq')) $('dq').value = '';
     setMode('edit'); renderSide();
   }
   function newDeck() {
@@ -310,6 +316,12 @@
     switch (a) {
       case 'add': return add(id, 1);
       case 'sub': return add(id, -1);
+      case 'sheet': S.sheet = !S.sheet; $('dside').classList.toggle('open', S.sheet); if (S.sheet) $('dside').scrollTop = 0; return;
+      case 'zoom': case 'zoomt': {
+        if (a === 'zoomt' && canHover) return;
+        const d = DEFS[id]; if (!d) return;
+        openOv(`<div class="zpop zd">${zoomHtml(d)}</div><div class="db-acts"><button class="chip pri" data-a="add" data-id="${esc(id)}">＋ เพิ่มลงเด็ค</button><button class="chip" data-a="closeov">ปิด</button></div>`); return;
+      }
       case 'tab': S.tab = t.dataset.v; return renderSide();
       case 'create': return newDeck();
       case 'back': return backToList();
@@ -339,22 +351,39 @@
      ปิดบนจอสัมผัส (ไม่มี hover) · กล่องขยายไม่รับเมาส์ จึงไม่กะพริบ */
   const canHover = window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches;
   let zEl = null, zFor = null;
-  function hideZoom() { if (zEl) zEl.classList.remove('on'); zFor = null; }
+  function hideZoom() { if (zEl) { zEl.classList.remove('on'); zEl.style.display = 'none'; } zFor = null; }
   function injectZoomCss() {
     if (document.getElementById('dzoom-css')) return;
     const s = document.createElement('style'); s.id = 'dzoom-css';
     s.textContent = `
 #dzoom{position:fixed;left:0;top:0;z-index:2147483000;box-sizing:border-box;width:360px;max-width:calc(100vw - 16px);padding:10px;pointer-events:none;opacity:0;visibility:hidden;transform:scale(.97);transition:opacity .12s,transform .12s;background:var(--card,#fff);color:var(--ink,#111);border:3px solid var(--ink,#111);border-radius:20px;box-shadow:8px 8px 0 rgba(0,0,0,.35);overflow:hidden;font-size:15px;line-height:1.5}
 #dzoom.on{opacity:1;visibility:visible;transform:none}
-#dzoom .zi{display:flex;justify-content:center}
-#dzoom img{display:block;max-width:100%;width:auto;height:auto;border:3px solid var(--ink,#111);border-radius:14px}
-#dzoom h3{margin:10px 2px 6px;font-size:1.25rem;line-height:1.25}
-#dzoom .zm{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
-#dzoom .zc{display:inline-flex;align-items:center;gap:4px;padding:2px 12px;border:2px solid var(--ink,#111);border-radius:99px;font-weight:700;font-size:.85rem;background:var(--card,#fff)}
-#dzoom p{margin:6px 2px 0}#dzoom .zn{color:var(--mut,#666)}
-#dzoom .kw{display:inline-block;margin-right:6px;padding:0 9px;border-radius:7px;background:#111;color:#fff;font-weight:700;font-size:.8rem}
-#dzoom .kw.AUTO,#dzoom .kw.ACTIVATE,#dzoom .kw.COST{background:#111}
+#dzoom .zi,.zpop .zi{display:flex;justify-content:center}
+.zpop img{display:block;max-width:100%;width:auto;height:auto;border:3px solid var(--ink,#111);border-radius:14px}
+.zpop h3{margin:10px 2px 6px;font-size:1.25rem;line-height:1.25}
+.zpop .zm{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.zpop .zc{display:inline-flex;align-items:center;gap:4px;padding:2px 12px;border:2px solid var(--ink,#111);border-radius:99px;font-weight:700;font-size:.85rem;background:var(--card,#fff)}
+.zpop p{margin:6px 2px 0}.zpop .zn{color:var(--mut,#666)}
+.zpop .kw{display:inline-block;margin-right:6px;padding:0 9px;border-radius:7px;background:#111;color:#fff;font-weight:700;font-size:.8rem}
+.zpop .kw.AUTO,.zpop .kw.ACTIVATE,.zpop .kw.COST{background:#111}
 .db-img[data-z],.db-m[data-z]{cursor:zoom-in}
+.db-t{position:relative}.db-i{display:none;position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:50%;border:2px solid var(--ink,#111);background:var(--gold,#fc0);color:#111;font:700 15px/1 serif;font-style:italic;padding:0;cursor:pointer;z-index:2}
+@media(hover:none),(pointer:coarse){.db-i{display:block}.db-m .db-img{cursor:zoom-in}}
+.db-bar-m,.db-sheet-x{display:none}
+.zd{max-height:calc(100vh - 120px);overflow:auto}.zd img{max-height:52vh}
+@media(max-width:900px){
+ #dedit{padding-bottom:88px}
+ .db-bar-m{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:14;gap:8px;align-items:center;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:var(--card,#fff);border-top:3px solid var(--ink,#111);box-shadow:0 -4px 12px rgba(0,0,0,.2)}
+ #dedit[hidden] .db-bar-m{display:none}
+ .db-bav{flex:none;width:44px;border:0;background:none;padding:0;cursor:pointer;color:var(--ink,#111)}.db-bav img{width:100%;display:block;border-radius:6px;border:2px solid var(--ink,#111)}
+ .db-bin{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25;font-size:.85rem}.db-bin>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .db-bar-m .chip{flex:none;padding:6px 10px;font-size:.8rem}
+ #dside{display:none}
+ #dside.open{display:flex;position:fixed;inset:0;z-index:15;max-height:none;border-radius:0;overflow:auto;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+ #dside.open .db-sheet-x{display:block;position:sticky;top:0;z-index:3;align-self:stretch}
+ .db-mini{grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}
+ .db-mini>.db-muted{grid-column:1/-1}
+}
 @media(prefers-reduced-motion:reduce){#dzoom{transition:none}}`;
     document.head.appendChild(s);
   }
@@ -369,14 +398,17 @@
     const y = Math.max(8, Math.min(r.top + r.height / 2 - h / 2, vh - h - 8));
     zEl.style.transform = ''; zEl.style.left = x + 'px'; zEl.style.top = y + 'px';
   }
+  function zoomHtml(d) {
+    const fx = (d.fx || []).map(f => `<p>${f[0] ? `<span class="kw ${esc(String(f[0]).split(' ')[0])}">${esc(String(f[0]).split(' ')[0])}</span>` : ''}${esc(f[0] && /^\S+\s/.test(f[0]) ? f[0].replace(/^\S+\s+/, '') + ': ' : '')}${esc(f[1])}</p>`).join('') || '<p class="zn">ไม่มีเอฟเฟกต์</p>';
+    const chips = [d.kind, costTxt(d), d.tribe, d.id].filter(Boolean).map(c => `<span class="zc">${esc(c)}</span>`).join('');
+    return `<div class="zi">${d.img ? `<img src="${esc(d.img)}" alt="">` : ''}</div><h3>${d.els.map(e => ico(e, 18)).join('')} ${esc(d.name)}</h3><div class="zm">${chips}</div>${fx}`;
+  }
   function showZoom(anchor) {
     const d = DEFS[anchor.dataset.z]; if (!d) return hideZoom();
     injectZoomCss();
-    if (!zEl) { zEl = document.createElement('div'); zEl.id = 'dzoom'; zEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(zEl); }
-    const fx = (d.fx || []).map(f => `<p>${f[0] ? `<span class="kw ${esc(String(f[0]).split(' ')[0])}">${esc(String(f[0]).split(' ')[0])}</span>` : ''}${esc(f[0] && /^\S+\s/.test(f[0]) ? f[0].replace(/^\S+\s+/, '') + ': ' : '')}${esc(f[1])}</p>`).join('') || '<p class="zn">ไม่มีเอฟเฟกต์</p>';
-    const chips = [d.kind, costTxt(d), d.tribe, d.id].filter(Boolean).map(c => `<span class="zc">${esc(c)}</span>`).join('');
-    zEl.innerHTML = `<div class="zi">${d.img ? `<img src="${esc(d.img)}" alt="">` : ''}</div><h3>${d.els.map(e => ico(e, 18)).join('')} ${esc(d.name)}</h3><div class="zm">${chips}</div>${fx}`;
-    zFor = anchor; zEl.classList.add('on'); placeZoom(anchor);
+    if (!zEl) { zEl = document.createElement('div'); zEl.id = 'dzoom'; zEl.className = 'zpop'; zEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(zEl); }
+    zEl.innerHTML = zoomHtml(d);
+    zFor = anchor; zEl.style.display = ''; zEl.classList.add('on'); placeZoom(anchor);
     const im = zEl.querySelector('img'); if (im && !im.complete) im.onload = () => { if (zFor === anchor) placeZoom(anchor); };
   }
   function initZoom() {
@@ -398,6 +430,7 @@
 
   /* ---------------- สลับหน้า Card List / Deckbuilder ---------------- */
   function showView(v) {
+    hideZoom();
     const deck = v === 'deck';
     $('v-cards').hidden = deck; $('v-deck').hidden = !deck;
     document.querySelectorAll('.sitetabs a[data-v]').forEach(a => { const on = a.dataset.v === v; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -423,7 +456,7 @@
     show: showView, openDeck, ready: () => inited,
     init() {
       if (inited) return; inited = true;
-      buildDefs(); skeleton(); renderFilters(); initZoom();
+      buildDefs(); injectZoomCss(); skeleton(); renderFilters(); initZoom();
       document.querySelectorAll('.sitetabs a[data-v]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); showView(a.dataset.v); }));
       setMode('list');
       fromHash();
