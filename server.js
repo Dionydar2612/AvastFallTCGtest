@@ -11,6 +11,8 @@ const rateLimit = require("express-rate-limit");
 
 const store = require("./lib/store");
 store.init();
+const updates = require("./lib/updates");
+updates.init();
 const playtest = require("./lib/playtest");
 const S = store.state; // ข้อมูลล่าสุดเสมอ (แก้ผ่าน /admin แล้วมีผลทันที)
 
@@ -133,6 +135,9 @@ api.get("/filters", (_req, res) => {
     costMax: Math.max(0, ...S.cards.map(costOf)),
   } });
 });
+
+// Update Note ที่แอดมินเขียนใน /admin  (เกมดึงไปแสดงให้ผู้เล่นทุกคน ไม่แคชเพื่อให้เห็นของใหม่ทันที)
+api.get("/updates", (_req, res) => { res.set("Cache-Control", "no-cache"); res.json({ data: updates.list() }); });
 
 api.get("/docs", (_req, res) => res.sendFile(path.join(__dirname, "public", "docs.html")));
 api.use((_req, res) => res.status(404).json({ error: "not_found" }));

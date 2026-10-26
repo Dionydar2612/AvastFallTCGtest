@@ -10,6 +10,7 @@
 | `/admin` | หลังบ้าน นำเข้า Excel / รูป / สำรอง-กู้คืน | `admin/` |
 | `/recommece?key=...` | อ่านข้อเสนอแนะจากผู้เล่น (`/recommend` ใช้ได้เหมือนกัน) | `lib/playtest.js` |
 | `/api/feedback`, `/api/room/*` | รับข้อเสนอแนะ / ห้องออนไลน์ (SSE) | `lib/playtest.js` |
+| `/api/updates` | Update Note ที่แอดมินเขียนใน `/admin` (แท็บ 📣 Update Note) เกมดึงไปแสดงให้ผู้เล่นทุกคน เก็บใน `data/updates.json` บนดิสก์ถาวร | `lib/updates.js` |
 
 **แถบเมนูเดียว:** หน้าแรกมีแถบบนสุดเดียว Playtest / Card List / Deckbuilder (`web/js/site.js`, `web/css/site.css`) Card List กับ Deckbuilder โหลดใน iframe `/cards/?embed=1` ตอนกดครั้งแรก (ตัดเมนูของตัวเองทิ้งเมื่อฝังอยู่) สลับแล้วเกมที่ค้างอยู่ไม่หาย · เปิดตรงด้วย `/#cards`, `/#deckbuilder` · `/cards/` ยังเปิดแบบหน้าเดี่ยวได้ · ธีมของเกมให้ตรงกับ Card List อยู่ที่ตัวแปรสีใน `web/css/style.css` (`:root`) และ `web/css/theme.css`
 

@@ -1,7 +1,7 @@
 // หลังบ้าน /admin  (ต้องตั้งตัวแปร ADMIN_PASSWORD ไม่งั้นจะปิดการใช้งาน)
 const path = require("path"), crypto = require("crypto");
 const express = require("express"), multer = require("multer"), rateLimit = require("express-rate-limit");
-const store = require("../lib/store"), imp = require("../lib/importer"), xl = require("../lib/xlsx");
+const updates = require("../lib/updates"), store = require("../lib/store"), imp = require("../lib/importer"), xl = require("../lib/xlsx");
 
 const PASS = process.env.ADMIN_PASSWORD || "";
 const SECRET = process.env.ADMIN_SECRET || crypto.createHash("sha256").update("cardapi:" + PASS).digest("hex");
@@ -42,6 +42,35 @@ api.use((req, res, next) => {
 });
 
 api.get("/cards", (_req, res) => res.json({ data: S.cards, decks: S.decks }));
+const CARD_TYPES = ["Avatar", "Unit", "Spell", "Ultimate"];
+const TYPE_ALIAS = { "อวตาร": "Avatar", "ยูนิต": "Unit", "สเปล": "Spell", "อัลติเมท": "Ultimate", "อัลติเมต": "Ultimate" };
+const typeOf = (raw) => CARD_TYPES.find((x) => x.toLowerCase() === raw.toLowerCase()) || TYPE_ALIAS[raw];
+// ใส่ฟิลด์ที่เหลือ (ธาตุ ค่าสถานะ เอฟเฟกต์ ฯลฯ) จากฟอร์มลงในการ์ด · โยน Error ถ้าข้อมูลไม่ถูกต้อง
+function fillCard(card, b) {
+  for (const k of ["sub", "element", "rarity", "rotation", "artist", "tribe", "flavor"]) {
+    const v = String(b[k] || "").trim(); if (v) card[k] = v;
+  }
+  for (const k of ["cost", "cri", "atk", "def", "sc"]) {
+    const v = String(b[k] ?? "").trim();
+    if (v !== "") { if (!Number.isFinite(Number(v))) throw new Error(`${k.toUpperCase()} ต้องเป็นตัวเลข`); card[k] = Number(v); }
+  }
+  card.effects = [];
+  for (let i = 1; i <= 5; i++) {
+    const keyword = String(b[`effect${i}_keyword`] || "").trim();
+    const text = String(b[`effect${i}_text`] || "").trim();
+    if (text) card.effects.push({ keyword, text });
+    else if (keyword) throw new Error(`เอฟเฟกต์ ${i}: ใส่ข้อความเอฟเฟกต์ด้วย หรือเอาคีย์เวิร์ดออก`);
+  }
+  return card;
+}
+function readImage(file) {
+  if (!file) return null;
+  if (file.size > 5 * 1024 * 1024) throw new Error("รูปต้องมีขนาดไม่เกิน 5MB");
+  const ext = magic(file.buffer);
+  if (!ext) throw new Error("ไฟล์รูปไม่ถูกต้อง รองรับ JPG, PNG และ WEBP");
+  return { ext, buffer: file.buffer };
+}
+
 // เพิ่ม/แก้ไขการ์ดทีละใบจากฟอร์ม โดยไม่ต้องใช้ Excel
 api.post("/cards", up.single("image"), (req, res) => {
   try {
@@ -51,9 +80,7 @@ api.post("/cards", up.single("image"), (req, res) => {
     const variant = String(b.variant || "").trim();
     const name = String(b.name || "").trim();
     const typeRaw = String(b.type || "").trim();
-    const types = ["Avatar", "Unit", "Spell", "Ultimate"];
-    const typeAlias = { "อวตาร": "Avatar", "ยูนิต": "Unit", "สเปล": "Spell", "อัลติเมท": "Ultimate", "อัลติเมต": "Ultimate" };
-    const type = types.find((x) => x.toLowerCase() === typeRaw.toLowerCase()) || typeAlias[typeRaw];
+    const type = typeOf(typeRaw);
     if (!/^[A-Za-z0-9_-]{1,20}$/.test(deck)) return res.status(400).json({ error: "เด็ค/ซีรีส์ใช้ได้เฉพาะ A–Z, 0–9, - และ _ (ไม่เกิน 40 ตัว)" });
     if (!/^\d{1,4}$/.test(noRaw)) return res.status(400).json({ error: "เลขการ์ดต้องเป็นตัวเลข 1–4 หลัก เช่น 001" });
     if (variant && !/^[A-Za-z0-9]+$/.test(variant)) return res.status(400).json({ error: "เวอร์ชันพิเศษใช้ได้เฉพาะ A–Z และ 0–9 เช่น SR" });
@@ -62,28 +89,8 @@ api.post("/cards", up.single("image"), (req, res) => {
     const no = noRaw.padStart(3, "0"), id = `${deck}-${no}${variant}`;
     const old = S.raw.find((c) => c.id.toLowerCase() === id.toLowerCase());
     if (old) return res.status(409).json({ error: `รหัส ${id} มีอยู่แล้ว หากต้องการแก้ไข ให้ใช้ Excel นำเข้าทับหรือแก้ข้อมูลผ่านวิธีที่รองรับ` });
-    const card = { id, deck, no, name, type };
-    for (const k of ["sub", "element", "rarity", "rotation", "artist", "tribe", "flavor"]) {
-      const v = String(b[k] || "").trim(); if (v) card[k] = v;
-    }
-    for (const k of ["cost", "cri", "atk", "def", "sc"]) {
-      const v = String(b[k] ?? "").trim();
-      if (v !== "") { if (!Number.isFinite(Number(v))) return res.status(400).json({ error: `${k.toUpperCase()} ต้องเป็นตัวเลข` }); card[k] = Number(v); }
-    }
-    card.effects = [];
-    for (let i = 1; i <= 5; i++) {
-      const keyword = String(b[`effect${i}_keyword`] || "").trim();
-      const text = String(b[`effect${i}_text`] || "").trim();
-      if (text) card.effects.push({ keyword, text });
-      else if (keyword) return res.status(400).json({ error: `เอฟเฟกต์ ${i}: ใส่ข้อความเอฟเฟกต์ด้วย หรือเอาคีย์เวิร์ดออก` });
-    }
-    let image = null;
-    if (req.file) {
-      if (req.file.size > 5 * 1024 * 1024) return res.status(400).json({ error: "รูปต้องมีขนาดไม่เกิน 5MB" });
-      const ext = magic(req.file.buffer);
-      if (!ext) return res.status(400).json({ error: "ไฟล์รูปไม่ถูกต้อง รองรับ JPG, PNG และ WEBP" });
-      image = { ext, buffer: req.file.buffer };
-    }
+    const card = fillCard({ id, deck, no, name, type }, b);
+    const image = readImage(req.file);
     const merged = imp.mergeCards(S.raw, [card], false);
     const decks = S.decks.some((d) => d.id.toLowerCase() === deck.toLowerCase())
       ? undefined
@@ -91,6 +98,27 @@ api.post("/cards", up.single("image"), (req, res) => {
     store.save({ cards: merged.result, decks }, `manual add ${id}`);
     if (image) store.saveImage(id, image.ext, image.buffer);
     res.json({ ok: true, card: S.byId.get(id.toLowerCase()), imageSaved: !!image });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// แก้ไขการ์ดที่มีอยู่แล้วทีละใบ (id/เด็ค/เลขการ์ดเปลี่ยนไม่ได้) + เปลี่ยนรูปการ์ดได้ถ้าแนบรูปมา
+api.put("/cards/:id", up.single("image"), (req, res) => {
+  try {
+    const old = S.raw.find((c) => c.id.toLowerCase() === req.params.id.toLowerCase());
+    if (!old) return res.status(404).json({ error: "ไม่พบการ์ด" });
+    const b = req.body || {};
+    const name = String(b.name || "").trim();
+    const type = typeOf(String(b.type || "").trim());
+    if (!name) return res.status(400).json({ error: "กรุณากรอกชื่อการ์ด" });
+    if (!type) return res.status(400).json({ error: "กรุณาเลือกประเภทการ์ด" });
+    const base = { ...old, name, type };
+    for (const k of ["sub", "element", "rarity", "rotation", "artist", "tribe", "flavor", "cost", "cri", "atk", "def", "sc", "effects"]) delete base[k];
+    const card = fillCard(base, b);
+    const image = readImage(req.file);
+    const merged = imp.mergeCards(S.raw, [card], false);
+    store.save({ cards: merged.result }, `manual edit ${old.id}`);
+    if (image) store.saveImage(old.id, image.ext, image.buffer);
+    res.json({ ok: true, card: S.byId.get(old.id.toLowerCase()), imageSaved: !!image });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
@@ -209,6 +237,17 @@ api.post("/images", up.array("files", 100), (req, res) => {
   });
   res.json({ results: out });
 });
+
+// ---- Update Note (โน้ตแจ้งอัปเดตที่ผู้เล่นทุกคนเห็นในเกม) ----
+api.get("/updates", (_req, res) => res.json({ data: updates.list() }));
+api.post("/updates", (req, res) => {
+  try { res.json({ ok: true, note: updates.add(req.body) }); } catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.put("/updates/:id", (req, res) => {
+  try { const n = updates.update(req.params.id, req.body); n ? res.json({ ok: true, note: n }) : res.status(404).json({ error: "ไม่พบโน้ตนี้" }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+api.delete("/updates/:id", (req, res) => updates.remove(req.params.id) ? res.json({ ok: true }) : res.status(404).json({ error: "ไม่พบโน้ตนี้" }));
 
 // ---- สำรอง/กู้คืน ----
 api.get("/backups", (_req, res) => res.json({ data: store.listBackups() }));

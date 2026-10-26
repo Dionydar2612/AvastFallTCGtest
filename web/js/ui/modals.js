@@ -78,7 +78,7 @@ function modalHTML(){
       ${f.msg?`<div class="warnbox">${esc(f.msg)}</div>`:''}
       <div class="acts"><button class="btn" data-act="closemodal">ยกเลิก</button><button class="btn pri" data-act="fbsend" ${f.busy?'disabled':''}>${f.busy?'กำลังส่ง…':'ส่งข้อเสนอแนะ'}</button></div></div></div>`;
   }
-  if(m.t==='notes')return `<div class="ov"><div class="dlg"><h2>Update Note</h2><div class="list">${UPDATE_NOTES.map(u=>`<div class="note"><b>${esc(u.date)} · ${esc(u.title)}</b><ul style="margin:4px 0 0;padding-left:20px">${u.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div>${close}</div></div>`;
+  if(m.t==='notes')return `<div class="ov"><div class="dlg"><h2>Update Note</h2><div class="list">${UPDATE_NOTES.length?'':'<div class="note">ยังไม่มีประกาศอัปเดต</div>'}${UPDATE_NOTES.map(u=>`<div class="note"><b>${esc(u.date)} · ${esc(u.title)}</b><ul style="margin:4px 0 0;padding-left:20px">${u.items.map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div>`).join('')}</div>${close}</div></div>`;
   if(m.t==='discard'){
     const P=G.players[m.p];const pd=pdOf();
     const acts=pd&&pd.kind==='act'&&pd.p===m.p?pd.spec.actions.filter(a=>a.zone==='discard'):[];
