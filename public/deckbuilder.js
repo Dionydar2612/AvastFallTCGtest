@@ -165,6 +165,7 @@
   }
 
   function renderPool() {
+    hideZoom();
     const av = DEFS[S.avatar], nc = nameCounts(S), q = S.q.trim().toLowerCase();
     const sorter = S.sort === 'cost' ? (x, y) => x.cost - y.cost || cmpId(x, y) : S.sort === 'costd' ? (x, y) => y.cost - x.cost || cmpId(x, y)
       : S.sort === 'name' ? (x, y) => x.name.localeCompare(y.name, 'th') || cmpId(x, y) : cmpId;
@@ -176,19 +177,20 @@
     $('dgrid').innerHTML = lib.map(d => {
       const n = S.counts[d.id] || 0, bad = av && !allowed(av, d), full = (nc[d.name] || 0) >= 4 || bad;
       return `<div class="db-t ${n ? 'in' : ''} ${bad ? 'off' : ''}" ${bad ? `title="ธาตุ${esc(d.els.join('/'))} ใส่ไม่ได้ Avatar เป็นธาตุ${esc(av.els.join('/') || 'ไม่ระบุ')}"` : ''}>
-        <button class="db-img" data-a="add" data-id="${esc(d.id)}" aria-label="เพิ่ม ${esc(d.name)}" ${full ? 'data-full="1"' : ''}>${pic(d)}${n ? `<span class="db-pill">${n}</span>` : ''}</button>
+        <button class="db-img" data-z="${esc(d.id)}" data-a="add" data-id="${esc(d.id)}" aria-label="เพิ่ม ${esc(d.name)}" ${full ? 'data-full="1"' : ''}>${pic(d)}${n ? `<span class="db-pill">${n}</span>` : ''}</button>
         <div class="db-nm">${esc(d.name)}</div><div class="db-mt">${d.els.map(e => ico(e, 12)).join('')} ${esc(d.id)} ${esc(costTxt(d))}</div>
         <div class="db-step"><button data-a="sub" data-id="${esc(d.id)}" ${n ? '' : 'disabled'} aria-label="ลด">−</button><b>${n}</b><button data-a="add" data-id="${esc(d.id)}" ${full ? 'disabled' : ''} aria-label="เพิ่ม">+</button></div></div>`;
     }).join('') || '<div class="empty">ไม่พบการ์ดตามตัวกรอง</div>';
   }
 
   function renderSide() {
+    hideZoom();
     const av = DEFS[S.avatar], tot = sizeOf(S), ed = edeckOf(S), edTot = Object.values(ed).reduce((a, b) => a + b, 0), nc = nameCounts(S);
     const errs = validate(S);
     const byTab = { Unit: 0, Spell: 0, Ultimate: 0, ALL: 0 };
     for (const [id, n] of Object.entries(S.counts)) { const d = DEFS[id]; if (d) { byTab[tabOf(d.kind)] += n; byTab.ALL += n; } }
     if ($('dname') !== document.activeElement) $('dname').value = S.name;
-    $('dhead').innerHTML = `<button class="db-av" data-a="avopen" aria-label="เลือก Avatar">${av ? pic(av) : '<div class="noimg">เลือก<br>Avatar</div>'}<span>เลือก Avatar</span></button>
+    $('dhead').innerHTML = `<button class="db-av" ${av ? `data-z="${esc(av.id)}"` : ''} data-a="avopen" aria-label="เลือก Avatar">${av ? pic(av) : '<div class="noimg">เลือก<br>Avatar</div>'}<span>เลือก Avatar</span></button>
       <div class="db-info"><b>${av ? esc(av.name) : 'ยังไม่ได้เลือก Avatar'}</b>${av ? `<div class="db-mt">${av.els.map(e => ico(e, 13)).join('')} ${esc(av.id)}</div>` : ''}
       <div class="db-tot"><b>${tot}</b>/60 ${tot === 60 ? '<span class="good">ครบ</span>' : `<span class="bad">${tot < 60 ? 'ขาด ' + (60 - tot) : 'เกิน ' + (tot - 60)}</span>`}</div>
       <div class="db-bar"><i class="${tot === 60 ? 'ok' : tot > 60 ? 'over' : ''}" style="width:${Math.min(100, tot / 60 * 100)}%"></i></div></div>`;
@@ -196,7 +198,7 @@
     $('del').innerHTML = `<div class="db-elh"><span>Element Deck <b>${edTot}</b>/8 ${edTot === 8 ? '<span class="good">✓</span>' : ''}</span><button class="chip" data-a="edauto">ตามธาตุ Avatar</button></div>
       <div class="db-elg">${ELS.map(k => `<div class="db-elc">${ico(k, 16)}<span>${esc(k)}</span><button data-a="edm" data-k="${esc(k)}" data-d="-1" aria-label="ลด ${esc(k)}">−</button><b>${ed[k] || 0}</b><button data-a="edm" data-k="${esc(k)}" data-d="1" aria-label="เพิ่ม ${esc(k)}">+</button></div>`).join('')}</div>`;
     const mine = Object.keys(S.counts).filter(id => S.counts[id] > 0 && DEFS[id]).map(id => DEFS[id]).sort((x, y) => (KORD[x.kind] - KORD[y.kind]) || x.cost - y.cost || cmpId(x, y));
-    $('dmini').innerHTML = mine.map(d => `<div class="db-m" title="${esc(d.name)}"><div class="db-img">${pic(d)}<span class="db-pill">${S.counts[d.id]}</span></div>
+    $('dmini').innerHTML = mine.map(d => `<div class="db-m" data-z="${esc(d.id)}"><div class="db-img">${pic(d)}<span class="db-pill">${S.counts[d.id]}</span></div>
       <div class="db-step"><button data-a="sub" data-id="${esc(d.id)}" aria-label="ลด">−</button><button data-a="add" data-id="${esc(d.id)}" ${(nc[d.name] || 0) >= 4 ? 'disabled' : ''} aria-label="เพิ่ม">+</button></div></div>`).join('')
       || '<span class="db-muted">ยังไม่มีการ์ดในเด็ค คลิกการ์ดทางซ้ายเพื่อใส่ลงเด็ค</span>';
     $('dbot').innerHTML = (errs.length ? `<div class="db-warn">${errs.map(esc).join('<br>')}</div>` : '<div class="good">✓ เด็คถูกต้อง พร้อมใช้เล่น กดบันทึกแล้วไปเลือกที่แท็บ Playtest</div>') +
@@ -227,7 +229,7 @@
   }
   function avatarModal() {
     const avs = Object.values(DEFS).filter(d => d.kind === 'Avatar').sort(cmpId);
-    openOv(`<h2>เลือก Avatar</h2><div class="db-avg">${avs.map(d => `<button class="db-avc ${S.avatar === d.id ? 'on' : ''}" data-a="avpick" data-id="${esc(d.id)}">${pic(d)}<b>${esc(d.name)}</b><small>${d.els.map(e => ico(e, 13)).join('')} ${esc(d.id)}</small></button>`).join('') || '<span class="db-muted">ไม่พบ Avatar</span>'}</div>
+    openOv(`<h2>เลือก Avatar</h2><div class="db-avg">${avs.map(d => `<button class="db-avc ${S.avatar === d.id ? 'on' : ''}" data-z="${esc(d.id)}" data-a="avpick" data-id="${esc(d.id)}">${pic(d)}<b>${esc(d.name)}</b><small>${d.els.map(e => ico(e, 13)).join('')} ${esc(d.id)}</small></button>`).join('') || '<span class="db-muted">ไม่พบ Avatar</span>'}</div>
       <div class="db-acts"><button class="chip" data-a="closeov">ปิด</button></div>`);
   }
 
@@ -251,11 +253,12 @@
     S.id = null; closeOv(); setMode('list'); scrollTo(0, 0);
   }
   function renderList() {
+    hideZoom();
     const saved = loadSaved().sort((a, b) => (b.updated || 0) - (a.updated || 0));
     const cards = saved.map(d => {
       const av = DEFS[d.avatar], errs = validate(d), ed = edeckOf(d), sure = confirmDel === d.id;
       const edTxt = Object.entries(ed).filter(([, n]) => n > 0).map(([k, n]) => k + ' ' + n).join(' · ') || '—';
-      return `<div class="db-deck box"><div class="db-dart">${av ? pic(av) : '<div class="noimg">—</div>'}</div>
+      return `<div class="db-deck box"><div class="db-dart" ${av ? `data-z="${esc(av.id)}"` : ''}>${av ? pic(av) : '<div class="noimg">—</div>'}</div>
         <div class="db-dinfo"><h3>${esc(d.name)}</h3><div class="db-muted">Avatar: ${esc(av ? av.name : '—')} · ${sizeOf(d)}/60 ใบ</div><div class="db-muted">Element Deck: ${esc(edTxt)}</div>
         ${errs.length ? `<div class="bad db-ds">⚠ ${esc(errs[0])}${errs.length > 1 ? ` (และอีก ${errs.length - 1} ข้อ)` : ''}</div>` : '<div class="good db-ds">✓ เด็คถูกต้อง</div>'}
         <div class="db-acts"><button class="chip pri" data-a="edit" data-id="${esc(d.id)}">แก้ไข</button><button class="chip" data-a="lshare" data-id="${esc(d.id)}">แชร์ / คัดลอกข้อความ</button><button class="chip" data-a="dup" data-id="${esc(d.id)}">ทำสำเนา</button>
@@ -330,6 +333,47 @@
     }
   }
 
+
+  /* ---------------- เอาเมาส์วางบนการ์ด → ขยายให้อ่านความสามารถชัด ๆ ----------------
+     ใช้กับทุกที่ที่มี data-z="<รหัสการ์ด>" (คลังการ์ด · เด็คด้านขวา · Avatar · หน้ารายการเด็ค)
+     ปิดบนจอสัมผัส (ไม่มี hover) · กล่องขยายไม่รับเมาส์ จึงไม่กะพริบ */
+  const canHover = window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches;
+  let zEl = null, zFor = null;
+  function hideZoom() { if (zEl) zEl.classList.remove('on'); zFor = null; }
+  function placeZoom(anchor) {
+    const r = anchor.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, gap = 12;
+    const h = Math.min(vh - 24, 700), w = Math.min(Math.round(h * 710 / 1004), vw - 24);
+    const hh = Math.round(w * 1004 / 710);
+    const room = { right: vw - r.right, left: r.left };
+    let x = room.right >= w + gap + 8 || room.right >= room.left ? r.right + gap : r.left - gap - w;
+    x = Math.max(8, Math.min(x, vw - w - 8));
+    let y = r.top + r.height / 2 - hh / 2;
+    y = Math.max(12, Math.min(y, vh - hh - 12));
+    zEl.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${hh}px`;
+  }
+  function showZoom(anchor) {
+    const d = DEFS[anchor.dataset.z]; if (!d || !d.img) return hideZoom();
+    if (!zEl) { zEl = document.createElement('div'); zEl.id = 'dzoom'; zEl.setAttribute('aria-hidden', 'true'); zEl.innerHTML = '<img alt="">'; document.body.appendChild(zEl); }
+    const im = zEl.firstChild; if (im.getAttribute('src') !== d.img) im.src = d.img; im.alt = d.name;
+    zFor = anchor; placeZoom(anchor); zEl.classList.add('on');
+  }
+  function initZoom() {
+    if (!canHover) return;
+    document.addEventListener('mouseover', e => {
+      const a = e.target.closest && e.target.closest('[data-z]');
+      if (!a) return hideZoom();
+      if (a !== zFor) showZoom(a);
+    });
+    document.addEventListener('mouseout', e => {
+      if (!zFor) return;
+      const to = e.relatedTarget;
+      if (!to || !(to.closest && to.closest('[data-z]') === zFor)) hideZoom();
+    });
+    addEventListener('scroll', hideZoom, true);
+    addEventListener('blur', hideZoom);
+    addEventListener('keydown', e => { if (e.key === 'Escape') hideZoom(); });
+  }
+
   /* ---------------- สลับหน้า Card List / Deckbuilder ---------------- */
   function showView(v) {
     const deck = v === 'deck';
@@ -357,7 +401,7 @@
     show: showView, openDeck, ready: () => inited,
     init() {
       if (inited) return; inited = true;
-      buildDefs(); skeleton(); renderFilters();
+      buildDefs(); skeleton(); renderFilters(); initZoom();
       document.querySelectorAll('.sitetabs a[data-v]').forEach(a => a.addEventListener('click', ev => { ev.preventDefault(); showView(a.dataset.v); }));
       setMode('list');
       fromHash();
