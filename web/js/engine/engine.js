@@ -408,6 +408,10 @@ async function destroyUnit(G, u, by) {
   by = by || { kind: 'effect' };
   if (by.kind === 'effect' && H.immuneToEffect(G, u)) { log(G, `${u.def.name} ไม่ถูกทำลายด้วยความสามารถการ์ด`, u.owner); return false; }
   const P = G.players[u.owner];
+  if (by.kind === 'battle') {   // ป้องกันการถูกทำลายจากการต่อสู้ (SD07-009 battleSave / SD07-023 flag battleImmune)
+    if (hasFlag(u, 'battleImmune')) { log(G, `${u.def.name} ไม่ถูกทำลายจากการต่อสู้ครั้งนี้`, u.owner); return false; }
+    for (const x of [...P.field]) { if (!x || silenced(G, x)) continue; const bs = FXOF(x).battleSave; if (bs && await bs({ G, p: u.owner, self: x, unit: u, by })) return false; }
+  }
   const wasSilenced = silenced(G, u);
   const fx = FXOF(u);
   const equips = [...u.equips];
