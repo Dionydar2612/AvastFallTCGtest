@@ -3387,6 +3387,30 @@
   "image": "/images/SD07-014.jpg"
  },
  {
+  "id": "SD07-014SR",
+  "deck": "SD07",
+  "no": "014",
+  "name": "เออร์มา เมนูพิเศษแห่งความสุข",
+  "type": "Unit",
+  "element": "น้ำ",
+  "rarity": "C",
+  "rotation": "A",
+  "artist": "Takeuchi Takashi",
+  "cost": 1,
+  "cri": 1,
+  "atk": 1,
+  "def": 2,
+  "tribe": "นางเงือก / นักร้อง",
+  "effects": [
+   {
+    "keyword": "ADVENT",
+    "text": "เมื่อ Unit นี้เข้าสู่ Action Zone จั่วการ์ด 1 ใบจาก Main Deck ของคุณ จากนั้นหากคุณมีการ์ดบนมือมากกว่า 5 ใบ เลือกการ์ดบนมือ 1 ใบทิ้งลงกองทิ้ง"
+   }
+  ],
+  "flavor": "“หวานหรือขมหรือเค็ม คุณอยากกินแบบไหน?”",
+  "image": "/images/SD07-014SR.jpg"
+ },
+ {
   "id": "SD07-015",
   "deck": "SD07",
   "no": "015",
