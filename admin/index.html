@@ -40,6 +40,25 @@ dialog::backdrop{background:rgba(0,0,0,.55)}
 .paste{border:3px dashed var(--ink);border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--pap)}
 .paste textarea{background:var(--card);margin-top:6px}
 button.rar{border-color:#1b4aa8;color:#1b4aa8}
+/* ---- ร้านค้า: ตารางความกว้างคงที่ ไม่ให้คอลัมน์ซ้อนกัน ---- */
+.shop{width:100%;min-width:640px;table-layout:fixed;border-collapse:collapse}
+.shopwrap{overflow-x:auto}
+.shop th,.shop td{padding:10px 12px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--mut)}
+.shop th{font-size:.85rem;color:var(--mut)}
+.shop .c-prod{width:auto}.shop .c-kind{width:120px}.shop .c-price{width:130px}.shop .c-sale{width:90px;text-align:center}.shop .c-act{width:110px;text-align:right}
+.shop td.c-sale,.shop th.c-sale{text-align:center}.shop td.c-act,.shop th.c-act{text-align:right}
+.shop .pname{font-weight:700;overflow-wrap:anywhere}.shop .psku{font-size:.85rem;color:var(--mut);overflow-wrap:anywhere}
+.shop td.c-price input{width:100%;min-width:0;padding:6px 10px}
+.shop td.c-sale input{width:20px;height:20px;padding:0;cursor:pointer}
+.shop td.c-act button{white-space:nowrap}
+.shop tr.dirty td{background:var(--pap)}
+@media(max-width:700px){.shop .c-kind{width:90px}.shop .c-price{width:100px}}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ok);margin-right:6px;box-shadow:0 0 0 0 var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px transparent}}
+.stat{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}.stat>div{border:2px solid var(--ink);border-radius:12px;padding:8px 16px;min-width:130px;background:var(--pap)}
+.stat b{display:block;font-size:1.6rem;line-height:1.2}
+.lv{font-weight:700}.lv.error{color:var(--bad)}.lv.warn{color:var(--warn)}.lv.info{color:var(--ok)}
+.logs td{white-space:normal;overflow-wrap:anywhere;font-size:.85rem}
 [hidden]{display:none!important}
 </style></head><body><main>
 
@@ -55,7 +74,7 @@ button.rar{border-color:#1b4aa8;color:#1b4aa8}
     <div class="row"><a href="/cards/" target="_blank" style="color:inherit">เปิดหน้า Card List ↗</a><button id="logout">ออกจากระบบ</button></div></div>
   <div class="tabs" id="tabs">
     <button data-t="import" class="on">นำเข้า Excel</button><button data-t="single">+ เพิ่มการ์ด 1 ใบ</button><button data-t="cards">การ์ด</button><button data-t="decks">เด็ค</button>
-    <button data-t="images">รูปภาพ</button><button data-t="notes">📣 Update Note</button><button data-t="backups">สำรอง/กู้คืน</button></div>
+    <button data-t="images">รูปภาพ</button><button data-t="shop">🛒 ร้านค้า</button><button data-t="online">🟢 ออนไลน์ <span id="onBadge" class="mut"></span></button><button data-t="logs">📜 Log</button><button data-t="notes">📣 Update Note</button><button data-t="backups">สำรอง/กู้คืน</button></div>
 
   <section id="t-import" class="box">
     <h2>นำเข้าการ์ดจาก Excel / CSV</h2>
@@ -153,6 +172,32 @@ button.rar{border-color:#1b4aa8;color:#1b4aa8}
     <h3>การ์ดที่ยังไม่มีรูป</h3><div id="noimg" class="mut"></div>
   </section>
 
+  <section id="t-shop" class="box" hidden>
+    <h2>ร้านค้า</h2>
+    <p class="mut">สินค้าถูกสร้างให้อัตโนมัติเมื่อมีชุดใหม่ (BT… = ซองการ์ด · SD… = Starter Deck) · แก้ราคา / ปิดขายได้ที่นี่ มีผลทันที</p>
+    <div id="shopMsg"></div>
+    <div class="shopwrap"><table class="shop">
+      <colgroup><col class="c-prod"><col class="c-kind"><col class="c-price"><col class="c-sale"><col class="c-act"></colgroup>
+      <thead><tr><th class="c-prod">สินค้า</th><th class="c-kind">ประเภท</th><th class="c-price">ราคา (เหรียญ)</th><th class="c-sale">วางขาย</th><th class="c-act"></th></tr></thead>
+      <tbody id="shopRows"></tbody></table></div>
+  </section>
+
+  <section id="t-online" class="box" hidden>
+    <h2><span class="dot"></span>ผู้ใช้ออนไลน์ตอนนี้</h2>
+    <p class="mut">นับจากผู้ที่เปิดหน้าเว็บอยู่ (ส่งสัญญาณทุก ~25 วินาที · เงียบเกิน 70 วินาทีถือว่าออฟไลน์) · อัปเดตอัตโนมัติทุก 10 วินาที · ไม่เก็บ IP จริง</p>
+    <div class="stat" id="onStat"></div>
+    <table class="tbl"><thead><tr><th>ผู้ใช้</th><th>หน้าที่เปิดอยู่</th><th>อุปกรณ์</th><th>อยู่มาแล้ว</th><th>เห็นล่าสุด</th></tr></thead><tbody id="onRows"></tbody></table>
+  </section>
+
+  <section id="t-logs" class="box" hidden>
+    <h2>📜 Log ระบบ</h2>
+    <p class="mut">แสดง 500 รายการล่าสุดในหน่วยความจำ · ไฟล์เต็มเก็บถาวรที่ <code>DATA_DIR/logs/</code> (14 วัน) ดาวน์โหลดได้ด้านล่าง</p>
+    <div class="row"><label>ระดับ: <select id="lgLevel"><option value="">ทั้งหมด</option><option value="warn">warn ขึ้นไป</option><option value="error">error เท่านั้น</option></select></label>
+      <label>ชนิด: <select id="lgType"><option value="">ทั้งหมด</option><option value="audit">การกระทำของแอดมิน</option><option value="http">HTTP ช้า/ผิดพลาด</option><option value="presence">ผู้ใช้เข้า/ออก</option></select></label>
+      <button id="lgReload">↻ รีเฟรช</button><span id="lgFiles" class="mut"></span></div>
+    <table class="tbl logs"><thead><tr><th>เวลา</th><th>ระดับ</th><th>ข้อความ</th></tr></thead><tbody id="lgRows"></tbody></table>
+  </section>
+
   <section id="t-notes" class="box" hidden>
     <h2>📣 Update Note (แจ้งผู้เล่น)</h2>
     <p class="mut">โน้ตที่โพสต์ที่นี่จะแสดงให้ผู้เล่นทุกคนเห็นในปุ่มกระดิ่ง Update Note ของหน้าเกม (มีจุดแดงเมื่อมีโน้ตใหม่) เก็บบนดิสก์ถาวรของ Render ไม่ต้องแก้โค้ด และลบได้จากหน้านี้เท่านั้น</p>
@@ -185,6 +230,7 @@ button.rar{border-color:#1b4aa8;color:#1b4aa8}
 <script src="/admin/clip.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+const TABS=["import","single","cards","decks","images","shop","online","logs","notes","backups"];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const show=(el,on=true)=>el.hidden=!on;
 async function api(path,opts={}){
@@ -215,8 +261,9 @@ $("logout").onclick=async()=>{await jpost("/logout",{});start()};
 /* ---------- tabs ---------- */
 $("tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;
   [...$("tabs").children].forEach(x=>x.classList.toggle("on",x===b));
-  ["import","single","cards","decks","images","notes","backups"].forEach(t=>show($("t-"+t),t===b.dataset.t));
-  if(b.dataset.t==="backups")loadBackups();else if(b.dataset.t==="notes")loadNotes();else if(b.dataset.t!=="import")loadAll()};
+  TABS.forEach(t=>show($("t-"+t),t===b.dataset.t));
+  const t=b.dataset.t;clearInterval(onTimer);
+  if(t==="backups")loadBackups();else if(t==="notes")loadNotes();else if(t==="shop")loadShop();else if(t==="online"){loadOnline();onTimer=setInterval(loadOnline,10000)}else if(t==="logs")loadLogs();else if(t!=="import")loadAll()};
 
 /* ---------- import ---------- */
 let info=null;
@@ -296,7 +343,7 @@ function startEdit(id){
   show($("editBanner"));$("singleForm").querySelector("button[type=reset]").textContent="ยกเลิกการแก้ไข";
   invalidateSingle();$("singlePreviewBox").innerHTML="";
   [...$("tabs").children].forEach(x=>x.classList.toggle("on",x.dataset.t==="single"));
-  ["import","single","cards","decks","images","notes","backups"].forEach(t=>show($("t-"+t),t==="single"));scrollTo(0,0);
+  TABS.forEach(t=>show($("t-"+t),t==="single"));scrollTo(0,0);
 }
 let singleChecked=false;
 function singleData(){const d={};for(const k of SF_KEYS){const el=$("sf-"+k);if(el)d[k]=el.value.trim()}return d}
@@ -361,7 +408,7 @@ $("rarOk").onclick=()=>{
   $("editBanner").innerHTML=`<b>คัดลอกจาก ${esc(c.id)} – ${esc(c.name)}</b> → สร้างใบใหม่รหัส <b>${esc(rarId(c,r))}</b> (ความหายาก ${esc(r)})<br>ข้อมูลเหมือนใบเดิมทุกอย่าง แก้ไขเพิ่มได้ · ใบใหม่ใช้รูปของตัวเองจึงต้องเลือกรูปในช่อง “รูปการ์ด” (ไม่ใส่ก็ได้ อัปโหลดทีหลังได้) · เสร็จแล้วกด ตรวจสอบข้อมูล แล้วกดยืนยัน<br>เมื่อบันทึก การ์ดใบนี้จะเข้าซองของชุด ${esc(c.deck)} ให้เองตามความหายาก`;
   show($("editBanner"));invalidateSingle();$("singlePreviewBox").innerHTML="";
   [...$("tabs").children].forEach(x=>x.classList.toggle("on",x.dataset.t==="single"));
-  ["import","single","cards","decks","images","notes","backups"].forEach(t=>show($("t-"+t),t==="single"));scrollTo(0,0);
+  TABS.forEach(t=>show($("t-"+t),t==="single"));scrollTo(0,0);
 };
 
 /* ---------- วางจากคลิปบอร์ด ---------- */
@@ -450,6 +497,46 @@ async function loadBackups(){
 $("bakRows").onclick=async e=>{const b=e.target.closest("button");if(!b)return;
   if(!confirm("กู้คืนข้อมูลชุดนี้? (สถานะปัจจุบันจะถูกสำรองไว้ก่อน)"))return;
   try{await jpost("/backups/restore",{name:b.dataset.n});alert("กู้คืนแล้ว");loadAll();loadBackups()}catch(err){alert(err.message)}};
+
+/* ---------- ร้านค้า ---------- */
+let SHOP=[];
+async function loadShop(){const j=await api("/shop");SHOP=j.data;renderShop()}
+function renderShop(){
+  $("shopRows").innerHTML=SHOP.map(p=>`<tr data-sku="${esc(p.sku)}"><td class="c-prod"><div class="pname">${esc(p.title)}</div><div class="psku">${esc(p.sku)}</div></td><td class="c-kind">${esc(p.kindLabel)}</td><td class="c-price"><input type="number" min="0" step="1" inputmode="numeric" value="${p.price}" aria-label="ราคา ${esc(p.title)}"></td><td class="c-sale"><input type="checkbox" ${p.onSale?"checked":""} aria-label="วางขาย ${esc(p.title)}"></td><td class="c-act"><button class="pri" data-act="save">บันทึก</button></td></tr>`).join("")||'<tr><td colspan="5" class="mut">ยังไม่มีเด็ค/ซีรีส์ในระบบ</td></tr>';
+}
+$("shopRows").addEventListener("input",e=>e.target.closest("tr")?.classList.add("dirty"));
+$("shopRows").onclick=async e=>{
+  const b=e.target.closest("button");if(!b)return;const tr=b.closest("tr"),sku=tr.dataset.sku;
+  const price=tr.querySelector("input[type=number]").value,onSale=tr.querySelector("input[type=checkbox]").checked;
+  b.disabled=true;
+  try{await api("/shop/"+encodeURIComponent(sku),{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({price:Number(price),onSale})});
+    tr.classList.remove("dirty");$("shopMsg").innerHTML=`<div class="msg ok">บันทึก ${esc(sku)} แล้ว (ราคา ${esc(price)} · ${onSale?"วางขาย":"ปิดขาย"})</div>`}
+  catch(err){$("shopMsg").innerHTML=`<div class="msg bad">${esc(err.message)}</div>`}
+  b.disabled=false;
+};
+
+/* ---------- ผู้ใช้ออนไลน์ ---------- */
+let onTimer=null;
+const dur=s=>s<60?s+" วิ":s<3600?Math.floor(s/60)+" นาที":Math.floor(s/3600)+" ชม. "+Math.floor(s%3600/60)+" นาที";
+async function loadOnline(){
+  try{
+    const j=await api("/presence");$("onBadge").textContent="("+j.online+")";
+    const r=j.rooms||{};
+    $("onStat").innerHTML=`<div><b>${j.online}</b>กำลังออนไลน์</div><div><b>${j.uniqueVisitors}</b>จำนวนอุปกรณ์/IP ไม่ซ้ำ</div><div><b>${r.playing??0}</b>ห้องที่กำลังเล่น (${r.rooms??0} ห้อง)</div><div><b>${j.peak?.n??0}</b>สูงสุดตั้งแต่เปิดเซิร์ฟเวอร์${j.peak?.at?`<small class="mut"> · ${esc(new Date(j.peak.at).toLocaleTimeString("th-TH"))}</small>`:""}</div>`;
+    $("onRows").innerHTML=j.list.map(u=>`<tr><td>#${esc(u.id)}</td><td>${esc(u.page)}</td><td>${esc(u.device)}</td><td>${dur(u.secs)}</td><td>${Math.max(0,Math.round((Date.now()-u.lastSeen)/1000))} วิ ที่แล้ว</td></tr>`).join("")||'<tr><td colspan="5" class="mut">ตอนนี้ไม่มีใครออนไลน์</td></tr>';
+  }catch(e){clearInterval(onTimer)}
+}
+
+/* ---------- Log ---------- */
+async function loadLogs(){
+  const q=new URLSearchParams({level:$("lgLevel").value,type:$("lgType").value,limit:200});
+  const j=await api("/logs?"+q);
+  $("lgFiles").innerHTML=j.files.length?" ดาวน์โหลด: "+j.files.slice(0,7).map(f=>`<a href="/admin/api/logs/file/${esc(f)}">${esc(f.slice(4,14))}</a>`).join(" · "):"";
+  $("lgRows").innerHTML=j.data.map(r=>{const {t,level,msg,type,...rest}=r;
+    return `<tr><td style="white-space:nowrap">${esc(new Date(t).toLocaleString("th-TH"))}</td><td class="lv ${esc(level)}">${esc(level)}</td><td><b>${esc(msg)}</b> <span class="mut">${esc(Object.entries(rest).map(([k,v])=>k+"="+(typeof v==="object"?JSON.stringify(v):v)).join(" "))}</span></td></tr>`}).join("")||'<tr><td colspan="3" class="mut">ยังไม่มี log ตามเงื่อนไขนี้</td></tr>';
+}
+$("lgReload").onclick=loadLogs;$("lgLevel").onchange=loadLogs;$("lgType").onchange=loadLogs;
+setInterval(()=>{if($("app").hidden||$("t-online").hidden===false)return;fetch("/admin/api/presence",{credentials:"same-origin",headers:{"X-Admin":"1"}}).then(r=>r.ok?r.json():null).then(j=>{if(j)$("onBadge").textContent="("+j.online+")"}).catch(()=>{})},30000);
 
 /* ---------- Update Note ---------- */
 let NOTES=[],editingNote=null;

@@ -9,8 +9,12 @@ const cors = require("cors");
 const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 
+const log = require("./lib/logger");
 const store = require("./lib/store");
 store.init();
+const shop = require("./lib/shop");
+shop.init();
+const presence = require("./lib/presence");
 const updates = require("./lib/updates");
 updates.init();
 const playtest = require("./lib/playtest");
@@ -22,6 +26,7 @@ const kwOf = (c) => (c.effects || []).map((e) => e.keyword.split(" ")[0]).filter
 
 const app = express();
 app.set("trust proxy", 1);
+app.use(log.requests); // log request ที่ช้า/ผิดพลาด (ดูได้ที่ /admin → Log)
 // เส้นทางของเกม (feedback / ห้องออนไลน์ SSE) ต้องมาก่อน compression และ express.json
 app.use(playtest.middleware);
 app.use(compression());
@@ -139,6 +144,13 @@ api.get("/filters", (_req, res) => {
 // Update Note ที่แอดมินเขียนใน /admin  (เกมดึงไปแสดงให้ผู้เล่นทุกคน ไม่แคชเพื่อให้เห็นของใหม่ทันที)
 api.get("/updates", (_req, res) => { res.set("Cache-Control", "no-cache"); res.json({ data: updates.list() }); });
 
+// ร้านค้า (สาธารณะ): เฉพาะสินค้าที่เปิดขาย · ไม่แคช เพื่อให้ราคาที่แก้ใน /admin มีผลทันที
+api.get("/shop", (_req, res) => { res.set("Cache-Control", "no-cache"); res.json({ data: shop.list().filter((x) => x.onSale) }); });
+
+// ผู้ใช้ออนไลน์: หน้าเว็บส่ง heartbeat มาที่นี่ (ดูผลที่ /admin → ออนไลน์)
+api.post("/presence/ping", (req, res) => { res.set("Cache-Control", "no-store"); res.status(presence.ping(req) ? 204 : 400).end(); });
+api.post("/presence/bye", (req, res) => { presence.bye(req); res.status(204).end(); });
+
 api.get("/docs", (_req, res) => res.sendFile(path.join(__dirname, "public", "docs.html")));
 api.use((_req, res) => res.status(404).json({ error: "not_found" }));
 
@@ -149,4 +161,7 @@ app.use("/admin", require("./admin/router"));
 app.use(express.static(path.join(__dirname, "web"), { index: "index.html", maxAge: 0, etag: true }));
 app.use((_req, res) => res.status(404).type("text/plain; charset=utf-8").send("ไม่พบหน้านี้"));
 
-app.listen(PORT, () => console.log(`AvastFall TCG on http://localhost:${PORT}  (เกม /  ·  Card List /cards/  ·  API /api  ·  Admin /admin)  · feedback → ${playtest.FILE}${playtest.hasAdminKey ? "" : "  · (ยังไม่ได้ตั้ง ADMIN_KEY)"}`));
+// error ที่ไม่ได้ดักไว้ → log แล้วตอบ 500
+app.use((err, req, res, _next) => { log.error("unhandled", { path: req.originalUrl, err: err.stack || String(err) }); if (!res.headersSent) res.status(500).type("text/plain; charset=utf-8").send("เกิดข้อผิดพลาด"); });
+
+app.listen(PORT, () => log.info("server_start", { port: PORT, logDir: log.dir }) || console.log(`AvastFall TCG on http://localhost:${PORT}  (เกม /  ·  Card List /cards/  ·  API /api  ·  Admin /admin)  · feedback → ${playtest.FILE}${playtest.hasAdminKey ? "" : "  · (ยังไม่ได้ตั้ง ADMIN_KEY)"}`));

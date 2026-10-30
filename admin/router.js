@@ -1,6 +1,7 @@
 // หลังบ้าน /admin  (ต้องตั้งตัวแปร ADMIN_PASSWORD ไม่งั้นจะปิดการใช้งาน)
 const path = require("path"), crypto = require("crypto");
 const express = require("express"), multer = require("multer"), rateLimit = require("express-rate-limit");
+const log = require("../lib/logger"), shop = require("../lib/shop"), presence = require("../lib/presence"), playtest = require("../lib/playtest");
 const updates = require("../lib/updates"), store = require("../lib/store"), imp = require("../lib/importer"), xl = require("../lib/xlsx");
 
 const PASS = process.env.ADMIN_PASSWORD || "";
@@ -29,7 +30,8 @@ const up = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 10
 api.get("/me", (req, res) => res.json({ enabled: !!PASS, authed: !!PASS && okToken(cookies(req).adm) }));
 api.post("/login", rateLimit({ windowMs: 15 * 60_000, limit: 10, message: { error: "ลองผิดบ่อยเกินไป รอ 15 นาที" } }), (req, res) => {
   if (!PASS) return res.status(503).json({ error: "ยังไม่ได้ตั้งค่า ADMIN_PASSWORD บนเซิร์ฟเวอร์" });
-  if (!crypto.timingSafeEqual(sha(req.body?.password ?? ""), sha(PASS))) return res.status(401).json({ error: "รหัสผ่านไม่ถูกต้อง" });
+  if (!crypto.timingSafeEqual(sha(req.body?.password ?? ""), sha(PASS))) { log.warn("admin_login_failed", { type: "audit", action: "login_failed", ip: log.hashIp(log.ipOf(req)) }); return res.status(401).json({ error: "รหัสผ่านไม่ถูกต้อง" }); }
+  log.audit("login", req);
   res.cookie("adm", mkToken(), { httpOnly: true, sameSite: "strict", secure: req.secure, path: "/admin", maxAge: 12 * 3600e3 });
   res.json({ ok: true });
 });
@@ -39,6 +41,7 @@ api.post("/logout", (_req, res) => { res.clearCookie("adm", { path: "/admin" });
 api.use((req, res, next) => {
   if (!PASS || !okToken(cookies(req).adm)) return res.status(401).json({ error: "unauthorized" });
   if (req.method !== "GET" && req.get("x-admin") !== "1") return res.status(403).json({ error: "bad_request" });
+  if (req.method !== "GET") res.on("finish", () => log.audit(`${req.method} ${req.path.replace(/\/[^/]+$/, (m) => (/^\/[A-Za-z0-9_-]+$/.test(m) ? "/:id" : m))}`, req, { status: res.statusCode }));
   next();
 });
 
@@ -255,6 +258,23 @@ api.put("/updates/:id", (req, res) => {
   catch (e) { res.status(400).json({ error: e.message }); }
 });
 api.delete("/updates/:id", (req, res) => updates.remove(req.params.id) ? res.json({ ok: true }) : res.status(404).json({ error: "ไม่พบโน้ตนี้" }));
+
+// ---- ร้านค้า ----
+api.get("/shop", (_req, res) => res.json({ data: shop.list() }));
+api.put("/shop/:sku", (req, res) => {
+  try {
+    const r = shop.update(req.params.sku, req.body);
+    log.audit("shop_update", req, { sku: req.params.sku, price: [r.before.price, r.after.price], onSale: [r.before.onSale, r.after.onSale] });
+    res.json({ ok: true, item: r.after });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+// ---- ผู้ใช้ออนไลน์ ----
+api.get("/presence", (_req, res) => res.json(presence.snapshot({ rooms: playtest.stats(), serverUptimeSec: Math.round(process.uptime()) })));
+
+// ---- Log ----
+api.get("/logs", (req, res) => res.json({ data: log.recent({ level: String(req.query.level || ""), type: String(req.query.type || ""), limit: Math.min(+req.query.limit || 200, 500) }), files: log.files() }));
+api.get("/logs/file/:name", (req, res) => { const p = log.filePath(req.params.name); p && require("fs").existsSync(p) ? res.download(p) : res.status(404).json({ error: "ไม่พบไฟล์" }); });
 
 // ---- สำรอง/กู้คืน ----
 api.get("/backups", (_req, res) => res.json({ data: store.listBackups() }));
